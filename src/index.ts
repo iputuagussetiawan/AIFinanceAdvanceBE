@@ -37,10 +37,13 @@ app.use(
     })
 );
 
-app.get('/', (req: Request, res: Response, next: NextFunction) => {
-  res.status(200).json({
-    message: "Welcome ton AI Finance Advance APP",
-  });
+app.get('/',async (req: Request, res: Response, next: NextFunction) => {
+    try {
+         throw new Error("Test Error");
+    } catch (error) {
+        next(error)
+    }
+   
 });
 
 app.use(errorHandler)
