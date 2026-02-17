@@ -24,19 +24,10 @@ app.use(express.json());
 // instead of the simpler 'querystring' library (extended: false).
 app.use(express.urlencoded({ extended: true }));
 
-app.use(
-    session({
-        name: "session",
-        keys: [config.SESSION_SECRET],
-        maxAge: 24 * 60 * 60 * 1000,
-        secure: config.NODE_ENV === "production",
-        httpOnly: true,
-        sameSite: "lax",
-    })
-);
+
 
 app.use(passport.initialize());
-app.use(passport.session());
+
 
 app.use(
     cors({
