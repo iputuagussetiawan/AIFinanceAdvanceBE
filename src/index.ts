@@ -4,6 +4,7 @@ import cors from "cors";
 import session from "cookie-session";
 import { config } from "./config/app.config";
 import connectDatabase from "./config/database.config";
+import { errorHandler } from "./middlewares/errorHandler.middleware";
 
 const app = express();
 const BASE_PATH = config.BASE_PATH;
@@ -36,11 +37,16 @@ app.use(
     })
 );
 
-app.get('/', (req: Request, res: Response, next: NextFunction) => {
-  res.status(200).json({
-    message: "Welcome ton AI Finance Advance APP",
-  });
+app.get('/',async (req: Request, res: Response, next: NextFunction) => {
+    try {
+         throw new Error("Test Error");
+    } catch (error) {
+        next(error)
+    }
+   
 });
+
+app.use(errorHandler)
 
 app.listen(config.PORT, async () => {
     console.log(`Server listening on port ${config.PORT} in ${config.NODE_ENV}`);
