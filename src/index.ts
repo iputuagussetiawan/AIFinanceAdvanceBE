@@ -5,6 +5,8 @@ import session from "cookie-session";
 import { config } from "./config/app.config";
 import connectDatabase from "./config/database.config";
 import { errorHandler } from "./middlewares/errorHandler.middleware";
+import { asyncHandler } from "./middlewares/asyncHandler.middleware";
+import { HTTPSTATUS } from "./config/http.config";
 
 const app = express();
 const BASE_PATH = config.BASE_PATH;
@@ -37,14 +39,13 @@ app.use(
     })
 );
 
-app.get('/',async (req: Request, res: Response, next: NextFunction) => {
-    try {
-         throw new Error("Test Error");
-    } catch (error) {
-        next(error)
-    }
-   
-});
+app.get('/',
+    asyncHandler(async(req:Request, res:Response, next:NextFunction)=>{
+        return res.status(HTTPSTATUS.OK).json({
+            message:"Welcome to AI Finance APP"
+        })
+    })
+);
 
 app.use(errorHandler)
 
