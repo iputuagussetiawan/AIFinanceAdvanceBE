@@ -108,3 +108,32 @@ export const loginController = asyncHandler(
     }
 );
 
+export const logOutController = asyncHandler(
+    async (req: Request, res: Response) => {
+        // 1. Clear the HttpOnly cookie
+        // We set the value to an empty string and the expiry to a date in the past
+        res.cookie("accessToken", "", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+            expires: new Date(0), // Instantly expires the cookie in the browser
+            path: "/",            // Ensure it clears the cookie for the entire domain
+        });
+
+        // 2. Clear Passport's internal user object if it exists
+        if (typeof req.logout === 'function') {
+            req.logout((err) => {
+                if (err) console.error("⚠️ [AUTH] Passport logout cleanup error:", err);
+            });
+        }
+
+        // 3. Professional logging
+        console.log("👋 [AUTH] User logged out successfully. Cookie cleared.");
+
+        // 4. Return clean response
+        return res.status(HTTPSTATUS.OK).json({
+            message: "Logged out successfully",
+        });
+    }
+);
+
