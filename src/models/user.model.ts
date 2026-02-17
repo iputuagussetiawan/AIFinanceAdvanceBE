@@ -1,6 +1,7 @@
 import mongoose, { Document, Schema } from "mongoose";
 import { compareValue, hashValue } from "../utils/bcrypt";
 
+
 export interface UserDocument extends Document {
     name: string;
     email: string;
@@ -10,7 +11,6 @@ export interface UserDocument extends Document {
     lastLogin: Date | null;
     createdAt: Date;
     updatedAt: Date;
-
     comparePassword(value: string): Promise<boolean>;
     omitPassword(): Omit<UserDocument, "password">;
 }
