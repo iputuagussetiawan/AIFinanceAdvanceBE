@@ -19,6 +19,7 @@ const companySchema = new Schema<CompanyDocument>(
         // The display name of the company
         name: {
             type: String,
+            unique: true,
             required: true,
             trim: true,
         },

@@ -13,13 +13,13 @@ export const googleLoginCallback = (req: Request, res: Response) => {
         const user = req.user as any; 
 
         if (!user) {
-            console.log("⚠️  [AUTH] Google authentication failed: No user found.");
+            console.log("⚠️[AUTH] Google authentication failed: No user found.");
             return res.redirect(`${config.FRONTEND_GOOGLE_CALLBACK_URL}?status=error&message=unauthorized`);
         }
 
         // 2. Generate your stateless JWT
         const access_token = signJwtToken({ userId: user._id });
-        console.log(`✅ [AUTH] Issued JWT for Google User: ${user.email}`);
+        console.log(`✅[AUTH] Issued JWT for Google User: ${user.email}`);
 
         // 3. Set the JWT in a secure HttpOnly Cookie
         res.cookie("accessToken", access_token, {
@@ -36,7 +36,7 @@ export const googleLoginCallback = (req: Request, res: Response) => {
         );
         
     } catch (error:any) {
-        console.error("❌ [AUTH] Callback Error:", error);
+        console.error("❌[AUTH] Callback Error:", error);
         const errorType = error.name === "NotFoundException" ? "user_not_found" : "server_error";
         return res.redirect(
             `${config.FRONTEND_GOOGLE_CALLBACK_URL}?status=error&code=${errorType}`
