@@ -91,4 +91,7 @@ passport.use(
 passport.serializeUser((user: any, done) => done(null, user));
 passport.deserializeUser((user: any, done) => done(null, user));
 
+//This line of code creates a "Guard" or "Bouncer" for your application's protected routes.  you would place this middleware in front of sensitive routes—like viewing bank balances or posting transactions—to ensure only authenticated users can get through.
+//passport.authenticate("jwt", ...): This tells Passport to use the JWT Strategy that you (or we) have configured. It will look for a token, verify its signature using your secret key, and check if it has expired.
+//{ session: false }: This is the most important part of your stateless architecture. It tells Passport: "Don't try to create a session in the database or store a session ID in a cookie. Just verify the token for this single request and move on." This prevents the req.session.save errors we discussed earlier.
 export const passportAuthenticateJWT=passport.authenticate("jwt", { session: false });
