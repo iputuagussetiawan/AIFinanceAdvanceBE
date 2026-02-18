@@ -1,9 +1,11 @@
 import mongoose, { Document, Schema } from "mongoose";
+import { generateInviteCode } from "../../utils/uuid";
 
 // Define the interface for TypeScript
 export interface CompanyDocument extends Document {
     name: string;
     slug: string;
+    inviteCode: string;
     baseCurrency: string;
     fiscalYearStartMonth: number;
     // --- ADDED RELATIONSHIP ---
@@ -30,6 +32,12 @@ const companySchema = new Schema<CompanyDocument>(
             unique: true,
             trim: true,
             lowercase: true,
+        },
+        inviteCode: {
+            type: String,
+            required: true,
+            unique: true,
+            default: generateInviteCode,
         },
         // The primary currency used for financial reports (e.g., 'USD', 'IDR')
         baseCurrency: {
@@ -65,6 +73,10 @@ const companySchema = new Schema<CompanyDocument>(
 
 // Create an index on the slug for high-performance searching in URLs
 companySchema.index({ slug: 1 });
+
+companySchema.methods.resetInviteCode = function () {
+    this.inviteCode = generateInviteCode();
+};
 
 const CompanyModel = mongoose.model<CompanyDocument>("Company", companySchema);
 export default CompanyModel;
