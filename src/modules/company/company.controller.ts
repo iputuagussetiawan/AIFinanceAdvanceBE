@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { asyncHandler } from "../../middlewares/asyncHandler.middleware";
-import { createCompanySchema } from "./company.validation";
-import { createCompanyService } from "./company.service";
+import { companyIdSchema, createCompanySchema, updateCompanySchema } from "./company.validation";
+import { createCompanyService, updateCompanyByIdService } from "./company.service";
 import { HTTPSTATUS } from "../../config/http.config";
 
 export const createCompanyController = asyncHandler(
@@ -11,6 +11,18 @@ export const createCompanyController = asyncHandler(
         const { company } = await createCompanyService(userId, body);
         return res.status(HTTPSTATUS.OK).json({
             message: "Company created successfully",
+            company,
+        });
+    }
+);
+
+export const updateCompanyByIdController = asyncHandler(
+    async (req: Request, res: Response) => {
+        const companyId = companyIdSchema.parse(req.params.id);
+        const body = updateCompanySchema.parse(req.body);
+        const { company } = await updateCompanyByIdService(companyId, body);
+        return res.status(HTTPSTATUS.OK).json({
+            message: "Company updated successfully",
             company,
         });
     }

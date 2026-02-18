@@ -1,5 +1,6 @@
+import { NotFoundException } from "../../utils/appError";
 import CompanyModel from "./company.model";
-import type { CreateCompanyInputType } from "./company.validation";
+import type { CreateCompanyInputType, UpdateCompanyInputType } from "./company.validation";
 
 export const createCompanyService = async (
     userId: string,
@@ -22,6 +23,26 @@ export const createCompanyService = async (
         owner: userId,
     });
     //simpan company
+    await company.save();
+    return {
+        company,
+    };
+};
+
+export const updateCompanyByIdService = async (
+    companyId: string,
+    body:UpdateCompanyInputType
+) => {
+    const company = await CompanyModel.findById(companyId);
+    if (!company) {
+        throw new NotFoundException("Workspace not found");
+    }
+    // Update the company details
+    company.name = body.name || company.name;
+    company.slug = body.slug || company.slug;
+    company.baseCurrency = body.baseCurrency || company.baseCurrency;
+    company.fiscalYearStartMonth = body.fiscalYearStartMonth || company.fiscalYearStartMonth;
+    company.isActive = body.isActive || company.isActive;
     await company.save();
     return {
         company,

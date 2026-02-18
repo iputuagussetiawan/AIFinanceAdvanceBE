@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { createCompanyController } from "./company.controller";
+import { createCompanyController, updateCompanyByIdController } from "./company.controller";
 
 const companyRoutes = Router();
 companyRoutes.post("/create", createCompanyController);
-
+companyRoutes.put("/update/:id", updateCompanyByIdController);
 export default companyRoutes;

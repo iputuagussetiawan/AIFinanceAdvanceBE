@@ -56,3 +56,4 @@ export const companyIdSchema = z
     
 // Extract the type from the schema
 export type CreateCompanyInputType = z.infer<typeof createCompanySchema>;
+export type UpdateCompanyInputType = z.infer<typeof updateCompanySchema>;
