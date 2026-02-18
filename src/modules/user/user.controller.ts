@@ -1,7 +1,8 @@
 import { Request, Response } from "express";
-import { asyncHandler } from "../middlewares/asyncHandler.middleware";
-import { HTTPSTATUS } from "../config/http.config";
-import { getCurrentUserService } from "../services/user.service";
+import { asyncHandler } from "../../middlewares/asyncHandler.middleware";
+import { getCurrentUserService } from "./user.service";
+import { HTTPSTATUS } from "../../config/http.config";
+
 export const getCurrentUserController = asyncHandler(
     async (req: Request, res: Response) => {
         const userId = req.user?._id;

@@ -1,11 +1,13 @@
 import { NextFunction, Request, Response } from "express";
-import { asyncHandler } from "../middlewares/asyncHandler.middleware";
-import { config } from "../config/app.config";
-import { registerSchema } from "../validations/auth.validation";
-import { registerUserService } from "../services/auth.service";
-import { HTTPSTATUS } from "../config/http.config";
+
 import passport from "passport";
-import { signJwtToken } from "../utils/jwt";
+import { config } from "../../config/app.config";
+import { signJwtToken } from "../../utils/jwt";
+import { asyncHandler } from "../../middlewares/asyncHandler.middleware";
+import { registerSchema } from "./auth.validation";
+import { registerUserService } from "./auth.service";
+import { HTTPSTATUS } from "../../config/http.config";
+
 
 export const googleLoginCallback = (req: Request, res: Response) => {
     try {

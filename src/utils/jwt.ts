@@ -1,6 +1,7 @@
 import jwt,{ SignOptions} from "jsonwebtoken"
-import { UserDocument } from "../models/user.model"
+
 import {config} from "../config/app.config"
+import type { UserDocument } from "../modules/user/user.model"
 
 
 export type AccessTPayload={

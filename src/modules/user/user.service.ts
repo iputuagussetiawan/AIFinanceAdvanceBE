@@ -1,5 +1,5 @@
-import UserModel from "../models/user.model";
-import { BadRequestException } from "../utils/appError";
+import { BadRequestException } from "../../utils/appError";
+import UserModel from "./user.model";
 
 export const getCurrentUserService = async (userId: string) => {
     const user = await UserModel.findById(userId)

@@ -9,10 +9,10 @@ import { asyncHandler } from "./middlewares/asyncHandler.middleware";
 import { HTTPSTATUS } from "./config/http.config";
 import passport from "passport";
 import "./config/passport.config";
-import authRoutes from "./routes/auth.route";
-import userRoutes from "./routes/user.route";
 import { passportAuthenticateJWT } from "./config/passport.config";
 import companyRoutes from "./modules/company/company.route";
+import userRoutes from "./modules/user/user.route";
+import authRoutes from "./modules/auth/auth.route";
 
 const app = express();
 const BASE_PATH = config.BASE_PATH;

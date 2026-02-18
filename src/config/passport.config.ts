@@ -5,9 +5,9 @@ import { Strategy as LocalStrategy } from "passport-local";
 import { config } from "./app.config";
 import { NotFoundException } from "../utils/appError";
 import { ProviderEnum } from "../enums/account-provider.enum";
-import { loginOrCreateAccountService, verifyUserByIdService, verifyUserService } from "../services/auth.service";
 import { Strategy as JwtStrategy, ExtractJwt, StrategyOptions } from "passport-jwt";
 import { signJwtToken } from "../utils/jwt";
+import { loginOrCreateAccountService, verifyUserByIdService, verifyUserService } from "../modules/auth/auth.service";
 
 interface JwtPayload {
     userId: string;

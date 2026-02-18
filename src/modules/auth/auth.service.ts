@@ -1,12 +1,9 @@
 import mongoose from "mongoose";
-import UserModel from "../models/user.model";
-import AccountModel from "../models/account.model";
-import {
-    BadRequestException,
-    NotFoundException,
-    UnauthorizedException,
-} from "../utils/appError";
-import { ProviderEnum } from "../enums/account-provider.enum";
+import UserModel from "../user/user.model";
+import AccountModel from "../user/account.model";
+import { BadRequestException, NotFoundException, UnauthorizedException } from "../../utils/appError";
+import { ProviderEnum } from "../../enums/account-provider.enum";
+
 
 
 
