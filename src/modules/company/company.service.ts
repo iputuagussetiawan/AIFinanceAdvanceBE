@@ -1,6 +1,8 @@
-import { NotFoundException } from "../../utils/appError";
+import mongoose from "mongoose";
+import { BadRequestException, NotFoundException } from "../../utils/appError";
 import CompanyModel from "./company.model";
 import type { CreateCompanyInputType, UpdateCompanyInputType } from "./company.validation";
+import UserModel from "../user/user.model";
 
 export const createCompanyService = async (
     userId: string,
@@ -40,6 +42,8 @@ export const updateCompanyByIdService = async (
     // Update the company details
     company.name = body.name || company.name;
     company.slug = body.slug || company.slug;
+    company.logoUrl = body.logoUrl || company.logoUrl;
+    company.bgUrl = body.bgUrl || company.bgUrl;
     company.baseCurrency = body.baseCurrency || company.baseCurrency;
     company.fiscalYearStartMonth = body.fiscalYearStartMonth || company.fiscalYearStartMonth;
     company.isActive = body.isActive || company.isActive;
@@ -48,4 +52,5 @@ export const updateCompanyByIdService = async (
         company,
     };
 };
+
 

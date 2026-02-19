@@ -5,11 +5,13 @@ import { generateInviteCode } from "../../utils/uuid";
 export interface CompanyDocument extends Document {
     name: string;
     slug: string;
+    logoUrl?: string;
+    bgUrl?: string;
     inviteCode: string;
     baseCurrency: string;
     fiscalYearStartMonth: number;
     // --- ADDED RELATIONSHIP ---
-    owner: mongoose.Types.ObjectId | null;
+    owner: mongoose.Types.ObjectId;
     // ----END RELATIONSHIP ----
     isActive: boolean;
     createdAt: Date;
@@ -32,6 +34,14 @@ const companySchema = new Schema<CompanyDocument>(
             unique: true,
             trim: true,
             lowercase: true,
+        },
+        // Optional URL to the company's logo image
+        logoUrl: {
+            type: String,
+        },
+        // Optional URL to the company's background image
+        bgUrl: {
+            type: String,
         },
         inviteCode: {
             type: String,

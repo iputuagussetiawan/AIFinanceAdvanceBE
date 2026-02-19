@@ -39,6 +39,8 @@ export const isActiveSchema = z.boolean().default(true);
 export const createCompanySchema = z.object({
     name: nameSchema,
     slug: slugSchema,
+    logoUrl: z.string().optional(),
+    bgUrl: z.string().optional(),
     baseCurrency: baseCurrencySchema,
     fiscalYearStartMonth: fiscalYearStartMonthSchema,
     isActive: isActiveSchema.optional(),
