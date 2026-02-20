@@ -1,9 +1,4 @@
-import {
-    Roles,
-    Permissions,
-    PermissionType,
-    RoleType,
-} from "../enums/role.enum";
+import { Permissions, type PermissionType, type RoleType } from './role.enum'
 
 export const RolePermissions: Record<RoleType, Array<PermissionType>> = {
     OWNER: [
@@ -32,7 +27,7 @@ export const RolePermissions: Record<RoleType, Array<PermissionType>> = {
         Permissions.DELETE_JOURNAL,
         Permissions.MANAGE_JOURNAL,
 
-        Permissions.VIEW_ONLY,
+        Permissions.VIEW_ONLY
     ],
     ADMIN: [
         Permissions.CREATE_COMPANY,
@@ -60,26 +55,16 @@ export const RolePermissions: Record<RoleType, Array<PermissionType>> = {
         Permissions.DELETE_JOURNAL,
         Permissions.MANAGE_JOURNAL,
 
-        Permissions.VIEW_ONLY,
+        Permissions.VIEW_ONLY
     ],
-    MANAGER: [
-        Permissions.APPROVE_JOURNAL,
-        Permissions.MANAGE_JOURNAL,
-        Permissions.VIEW_ONLY,
-    ],
+    MANAGER: [Permissions.APPROVE_JOURNAL, Permissions.MANAGE_JOURNAL, Permissions.VIEW_ONLY],
     ACCOUNTANT: [
         Permissions.CREATE_JOURNAL,
         Permissions.EDIT_JOURNAL,
         Permissions.DELETE_JOURNAL,
-        Permissions.MANAGE_JOURNAL,
+        Permissions.MANAGE_JOURNAL
     ],
-    AUDITOR: [
-        Permissions.VIEW_ONLY,
-    ],
-    MEMBER: [
-        Permissions.VIEW_ONLY,
-    ],
-    GUEST: [
-        Permissions.VIEW_ONLY,
-    ],
-};
+    AUDITOR: [Permissions.VIEW_ONLY],
+    MEMBER: [Permissions.VIEW_ONLY],
+    GUEST: [Permissions.VIEW_ONLY]
+}
