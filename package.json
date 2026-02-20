@@ -3,6 +3,7 @@
     "version": "1.0.0",
     "main": "index.js",
     "scripts": {
+        "type-check": "tsc --noEmit",
         "seed": "ts-node src/seeders/index.ts",
         "prod": "npm install --production-false && npm run build",
         "dev": "ts-node-dev --files src/index.ts",
