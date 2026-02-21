@@ -1,8 +1,15 @@
 import { Request, Response } from 'express'
 import { asyncHandler } from '../../middlewares/asyncHandler.middleware'
-import { companyIdSchema, createCompanySchema, updateCompanySchema } from './company.validation'
 import {
+    changeRoleSchema,
+    companyIdSchema,
+    createCompanySchema,
+    updateCompanySchema
+} from './company.validation'
+import {
+    changeMemberRoleService,
     createCompanyService,
+    deleteCompanyService,
     getAllCompaniesUserIsMemberService,
     getCompanyByIdService,
     getCompanyMembersService,
@@ -67,3 +74,30 @@ export const getCompanyByIdController = asyncHandler(async (req: Request, res: R
         company
     })
 })
+
+export const deleteCompanyByIdController = asyncHandler(async (req: Request, res: Response) => {
+    const companyId = companyIdSchema.parse(req.params.id)
+    const userId = req.user?._id
+    const { role } = await getMemberRoleInCompany(userId, companyId)
+    roleGuard(role, [Permissions.DELETE_COMPANY])
+    const { currentCompany } = await deleteCompanyService(companyId, userId)
+    return res.status(HTTPSTATUS.OK).json({
+        message: 'Company deleted successfully',
+        currentCompany
+    })
+})
+
+export const changeCompanyMemberRoleController = asyncHandler(
+    async (req: Request, res: Response) => {
+        const companyId = companyIdSchema.parse(req.params.id)
+        const { memberId, roleId } = changeRoleSchema.parse(req.body)
+        const userId = req.user?._id
+        const { role } = await getMemberRoleInCompany(userId, companyId)
+        roleGuard(role, [Permissions.CHANGE_MEMBER_ROLE])
+        const { member } = await changeMemberRoleService(companyId, memberId, roleId)
+        return res.status(HTTPSTATUS.OK).json({
+            message: 'Member Role changed successfully',
+            member
+        })
+    }
+)

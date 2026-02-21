@@ -1,5 +1,5 @@
 import mongoose from 'mongoose'
-import { NotFoundException } from '../../utils/appError'
+import { BadRequestException, NotFoundException } from '../../utils/appError'
 import CompanyModel from './company.model'
 import type { CreateCompanyInputType, UpdateCompanyInputType } from './company.validation'
 import UserModel from '../user/user.model'
@@ -107,5 +107,73 @@ export const getCompanyByIdService = async (companyId: string) => {
     }
     return {
         company: companyWithMembers
+    }
+}
+
+export const deleteCompanyService = async (companyId: string, userId: string) => {
+    const session = await mongoose.startSession()
+    session.startTransaction()
+    try {
+        const company = await CompanyModel.findById(companyId).session(session)
+        if (!company) {
+            throw new NotFoundException('Company not found')
+        }
+        // Check if the user owns the company
+        if (company.owner.toString() !== userId) {
+            throw new BadRequestException('You are not authorized to delete this company')
+        }
+        const user = await UserModel.findById(userId).session(session)
+        if (!user) {
+            throw new NotFoundException('User not found')
+        }
+
+        await MemberModel.deleteMany({
+            companyId: company._id
+        }).session(session)
+
+        // Update the user's currentCompany if it matches the deleted company
+        if (user?.currentCompany?.equals(companyId)) {
+            const memberCompany = await MemberModel.findOne({ userId }).session(session)
+            // Update the user's currentCompany
+            user.currentCompany = memberCompany ? memberCompany.companyId : null
+            await user.save({ session })
+        }
+        await company.deleteOne({ session })
+        await session.commitTransaction()
+        session.endSession()
+        return {
+            currentCompany: user.currentCompany
+        }
+    } catch (error) {
+        await session.abortTransaction()
+        session.endSession()
+        throw error
+    }
+}
+
+export const changeMemberRoleService = async (
+    companyId: string,
+    memberId: string,
+    roleId: string
+) => {
+    const company = await CompanyModel.findById(companyId)
+    if (!company) {
+        throw new NotFoundException('Company not found')
+    }
+    const role = await RoleModel.findById(roleId)
+    if (!role) {
+        throw new NotFoundException('Role not found')
+    }
+    const member = await MemberModel.findOne({
+        userId: memberId,
+        companyId: companyId
+    })
+    if (!member) {
+        throw new Error('Member not found in the company')
+    }
+    member.role = role
+    await member.save()
+    return {
+        member
     }
 }
