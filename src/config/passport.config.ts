@@ -1,23 +1,27 @@
-import passport from "passport";
-import { Request } from "express";
-import { Strategy as GoogleStrategy } from "passport-google-oauth20";
-import { Strategy as LocalStrategy } from "passport-local";
-import { config } from "./app.config";
-import { NotFoundException } from "../utils/appError";
-import { ProviderEnum } from "../enums/account-provider.enum";
-import { loginOrCreateAccountService, verifyUserByIdService, verifyUserService } from "../services/auth.service";
-import { Strategy as JwtStrategy, ExtractJwt, StrategyOptions } from "passport-jwt";
-import { signJwtToken } from "../utils/jwt";
+import passport from 'passport'
+import { Request } from 'express'
+import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
+import { Strategy as LocalStrategy } from 'passport-local'
+import { config } from './app.config'
+import { NotFoundException } from '../utils/appError'
+import { ProviderEnum } from '../enums/account-provider.enum'
+import { Strategy as JwtStrategy, ExtractJwt, StrategyOptions } from 'passport-jwt'
+import { signJwtToken } from '../utils/jwt'
+import {
+    loginOrCreateAccountService,
+    verifyUserByIdService,
+    verifyUserService
+} from '../modules/auth/auth.service'
 
 interface JwtPayload {
-    userId: string;
+    userId: string
 }
 
-const options:StrategyOptions={
+const options: StrategyOptions = {
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-    secretOrKey:config.JWT_SECRET,
-    audience:["user"],
-    algorithms:["HS256"]
+    secretOrKey: config.JWT_SECRET,
+    audience: ['user'],
+    algorithms: ['HS256']
 }
 
 passport.use(
@@ -26,72 +30,70 @@ passport.use(
             clientID: config.GOOGLE_CLIENT_ID,
             clientSecret: config.GOOGLE_CLIENT_SECRET,
             callbackURL: config.GOOGLE_CALLBACK_URL,
-            scope: ["profile", "email"],
-            passReqToCallback: true,
+            scope: ['profile', 'email'],
+            passReqToCallback: true
         },
         async (req: Request, accessToken, refreshToken, profile, done) => {
             try {
-                const { email, sub: googleId, picture } = profile._json;
-                console.log(profile, "profile");
-                console.log(googleId, "googleId");
+                const { email, sub: googleId, picture } = profile._json
+                console.log(profile, 'profile')
+                console.log(googleId, 'googleId')
                 if (!googleId) {
-                    throw new NotFoundException("Google ID (sub) is missing");
+                    throw new NotFoundException('Google ID (sub) is missing')
                 }
                 const { user } = await loginOrCreateAccountService({
                     provider: ProviderEnum.GOOGLE,
                     displayName: profile.displayName,
                     providerId: googleId,
                     picture: picture,
-                    email: email,
-                });
-                const jwt=signJwtToken({userId:user._id})
-                req.jwt=jwt
-                done(null, user);
+                    email: email
+                })
+                const jwt = signJwtToken({ userId: user._id })
+                req.jwt = jwt
+                done(null, user)
             } catch (error) {
-                done(error, false);
+                done(error, false)
             }
         }
     )
-);
+)
 
 passport.use(
     new LocalStrategy(
         {
-            usernameField: "email",
-            passwordField: "password",
-            session: false,
+            usernameField: 'email',
+            passwordField: 'password',
+            session: false
         },
         async (email, password, done) => {
             try {
-                const user = await verifyUserService({ email, password });
-                return done(null, user);
+                const user = await verifyUserService({ email, password })
+                return done(null, user)
             } catch (error: any) {
-                return done(error, false, { message: error?.message });
+                return done(error, false, { message: error?.message })
             }
         }
     )
-);
+)
 
 passport.use(
-    new JwtStrategy(options,async(payload:JwtPayload,done)=>{
+    new JwtStrategy(options, async (payload: JwtPayload, done) => {
         try {
-            const user=await verifyUserByIdService(payload.userId)
-            if(!user){
-                return done(null,false)
+            const user = await verifyUserByIdService(payload.userId)
+            if (!user) {
+                return done(null, false)
             }
-            return done(null,user)
-            
+            return done(null, user)
         } catch (error: any) {
-            return done(error, false, { message: error?.message });
+            return done(error, false, { message: error?.message })
         }
     })
 )
 
-
-passport.serializeUser((user: any, done) => done(null, user));
-passport.deserializeUser((user: any, done) => done(null, user));
+passport.serializeUser((user: any, done) => done(null, user))
+passport.deserializeUser((user: any, done) => done(null, user))
 
 //This line of code creates a "Guard" or "Bouncer" for your application's protected routes.  you would place this middleware in front of sensitive routes—like viewing bank balances or posting transactions—to ensure only authenticated users can get through.
 //passport.authenticate("jwt", ...): This tells Passport to use the JWT Strategy that you (or we) have configured. It will look for a token, verify its signature using your secret key, and check if it has expired.
 //{ session: false }: This is the most important part of your stateless architecture. It tells Passport: "Don't try to create a session in the database or store a session ID in a cookie. Just verify the token for this single request and move on." This prevents the req.session.save errors we discussed earlier.
-export const passportAuthenticateJWT=passport.authenticate("jwt", { session: false });
+export const passportAuthenticateJWT = passport.authenticate('jwt', { session: false })

@@ -1,14 +1,14 @@
-import UserModel from "../models/user.model";
-import { BadRequestException } from "../utils/appError";
+import { BadRequestException } from '../../utils/appError'
+import UserModel from './user.model'
 
 export const getCurrentUserService = async (userId: string) => {
     const user = await UserModel.findById(userId)
         //It tells the database: "Fetch everything for this user, except for the password field."
-        .select("-password");
+        .select('-password')
     if (!user) {
-        throw new BadRequestException("User not found");
+        throw new BadRequestException('User not found')
     }
     return {
-        user,
-    };
-};
+        user
+    }
+}
