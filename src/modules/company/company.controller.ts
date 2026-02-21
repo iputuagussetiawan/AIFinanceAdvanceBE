@@ -5,10 +5,13 @@ import {
     createCompanyService,
     getAllCompaniesUserIsMemberService,
     getCompanyByIdService,
+    getCompanyMembersService,
     updateCompanyByIdService
 } from './company.service'
 import { HTTPSTATUS } from '../../config/http.config'
 import { getMemberRoleInCompany } from '../member/member.service'
+import { roleGuard } from '../role/role-guard.util'
+import { Permissions } from '../role/role.enum'
 
 export const createCompanyController = asyncHandler(async (req: Request, res: Response) => {
     const body = createCompanySchema.parse(req.body)
@@ -30,6 +33,19 @@ export const getAllCompanyUserIsMemberController = asyncHandler(
         })
     }
 )
+
+export const getCompanyMembersController = asyncHandler(async (req: Request, res: Response) => {
+    const companyId = companyIdSchema.parse(req.params.id)
+    const userId = req.user?._id
+    const { role } = await getMemberRoleInCompany(userId, companyId)
+    roleGuard(role, [Permissions.VIEW_ONLY])
+    const { members, roles } = await getCompanyMembersService(companyId)
+    return res.status(HTTPSTATUS.OK).json({
+        message: 'Company members retrieved successfully',
+        members,
+        roles
+    })
+})
 
 export const updateCompanyByIdController = asyncHandler(async (req: Request, res: Response) => {
     const companyId = companyIdSchema.parse(req.params.id)

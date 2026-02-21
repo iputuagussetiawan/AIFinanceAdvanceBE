@@ -62,6 +62,17 @@ export const getAllCompaniesUserIsMemberService = async (userId: string) => {
     return { companies }
 }
 
+export const getCompanyMembersService = async (companyId: string) => {
+    // Fetch all members of the company
+    const members = await MemberModel.find({
+        companyId
+    })
+        .populate('userId', 'name email profilePicture -password')
+        .populate('role', 'name')
+    const roles = await RoleModel.find({}, { name: 1, _id: 1 }).select('-permission').lean()
+    return { members, roles }
+}
+
 export const updateCompanyByIdService = async (companyId: string, body: UpdateCompanyInputType) => {
     const company = await CompanyModel.findById(companyId)
     if (!company) {
