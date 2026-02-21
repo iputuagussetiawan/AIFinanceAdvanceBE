@@ -1,18 +1,21 @@
 import mongoose from 'mongoose'
-import { BadRequestException, NotFoundException } from '../../utils/appError'
+import { NotFoundException } from '../../utils/appError'
 import CompanyModel from './company.model'
 import type { CreateCompanyInputType, UpdateCompanyInputType } from './company.validation'
 import UserModel from '../user/user.model'
+import MemberModel from '../member/member.model'
+import RoleModel from '../role/roles-permission.model'
+import { Roles } from '../role/role.enum'
 
 export const createCompanyService = async (userId: string, body: CreateCompanyInputType) => {
-    // 1. Check if name already exists (The "Unique" check)
-    const existingCompany = await CompanyModel.findOne({
-        name: { $regex: new RegExp(`^${body.name}$`, 'i') }
-    })
+    const user = await UserModel.findById(userId)
+    if (!user) {
+        throw new NotFoundException('User not found')
+    }
+    const ownerRole = await RoleModel.findOne({ name: Roles.OWNER })
 
-    if (existingCompany) {
-        // Assuming you have a custom exception handler
-        throw new Error('Company name already exists')
+    if (!ownerRole) {
+        throw new NotFoundException('Owner role not found')
     }
 
     // //buat company
@@ -21,11 +24,42 @@ export const createCompanyService = async (userId: string, body: CreateCompanyIn
         // Ensure owner is set correctly if it differs from body.owner
         owner: userId
     })
+
     //simpan company
     await company.save()
+
+    //  // 1. Check if name already exists (The "Unique" check)
+    // const existingCompany = await CompanyModel.findOne({
+    //     name: { $regex: new RegExp(`^${body.name}$`, 'i') }
+    // })
+
+    // if (existingCompany) {
+    //     // Assuming you have a custom exception handler
+    //     throw new Error('Company name already exists')
+    // }
+
+    const member = new MemberModel({
+        userId: user._id,
+        companyId: company._id,
+        role: ownerRole._id,
+        joinedAt: new Date()
+    })
+    await member.save()
+    user.currentCompany = company._id as mongoose.Types.ObjectId
+    await user.save()
     return {
         company
     }
+}
+
+export const getAllCompaniesUserIsMemberService = async (userId: string) => {
+    const memberships = await MemberModel.find({ userId })
+        .populate('companyId')
+        .select('-password')
+        .exec()
+    // Extract company details from memberships
+    const companies = memberships.map((membership) => membership.companyId)
+    return { companies }
 }
 
 export const updateCompanyByIdService = async (companyId: string, body: UpdateCompanyInputType) => {
@@ -52,7 +86,15 @@ export const getCompanyByIdService = async (companyId: string) => {
     if (!company) {
         throw new NotFoundException('Company not found')
     }
+
+    const members = await MemberModel.find({
+        companyId
+    }).populate('role')
+    const companyWithMembers = {
+        ...company.toObject(),
+        members
+    }
     return {
-        company
+        company: companyWithMembers
     }
 }
