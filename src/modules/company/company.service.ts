@@ -52,16 +52,6 @@ export const createCompanyService = async (userId: string, body: CreateCompanyIn
     }
 }
 
-export const getAllCompaniesUserIsMemberService = async (userId: string) => {
-    const memberships = await MemberModel.find({ userId })
-        .populate('companyId')
-        .select('-password')
-        .exec()
-    // Extract company details from memberships
-    const companies = memberships.map((membership) => membership.companyId)
-    return { companies }
-}
-
 export const getCompanyMembersService = async (companyId: string) => {
     // Fetch all members of the company
     const members = await MemberModel.find({

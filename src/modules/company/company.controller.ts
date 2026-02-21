@@ -10,7 +10,6 @@ import {
     changeMemberRoleService,
     createCompanyService,
     deleteCompanyService,
-    getAllCompaniesUserIsMemberService,
     getCompanyByIdService,
     getCompanyMembersService,
     updateCompanyByIdService
@@ -29,17 +28,6 @@ export const createCompanyController = asyncHandler(async (req: Request, res: Re
         company
     })
 })
-
-export const getAllCompanyUserIsMemberController = asyncHandler(
-    async (req: Request, res: Response) => {
-        const userId = req.user?._id
-        const { companies } = await getAllCompaniesUserIsMemberService(userId)
-        return res.status(HTTPSTATUS.OK).json({
-            message: 'User companies fetched successfully',
-            companies
-        })
-    }
-)
 
 export const getCompanyMembersController = asyncHandler(async (req: Request, res: Response) => {
     const companyId = companyIdSchema.parse(req.params.id)
