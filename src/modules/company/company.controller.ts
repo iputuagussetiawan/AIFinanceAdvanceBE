@@ -10,6 +10,7 @@ import {
     changeMemberRoleService,
     createCompanyService,
     deleteCompanyService,
+    getAllCompanyUserIsMemberService,
     getCompanyByIdService,
     getCompanyMembersService,
     updateCompanyByIdService
@@ -18,6 +19,17 @@ import { HTTPSTATUS } from '../../config/http.config'
 import { getMemberRoleInCompany } from '../member/member.service'
 import { roleGuard } from '../role/role-guard.util'
 import { Permissions } from '../role/role.enum'
+
+export const getAllCompaniesUserIsMemberController = asyncHandler(
+    async (req: Request, res: Response) => {
+        const userId = req.user?._id
+        const { companies } = await getAllCompanyUserIsMemberService(userId)
+        return res.status(HTTPSTATUS.OK).json({
+            message: 'User companies fetched successfully',
+            companies
+        })
+    }
+)
 
 export const createCompanyController = asyncHandler(async (req: Request, res: Response) => {
     const body = createCompanySchema.parse(req.body)
@@ -68,10 +80,10 @@ export const deleteCompanyByIdController = asyncHandler(async (req: Request, res
     const userId = req.user?._id
     const { role } = await getMemberRoleInCompany(userId, companyId)
     roleGuard(role, [Permissions.DELETE_COMPANY])
-    const { currentCompany } = await deleteCompanyService(companyId, userId)
+    await deleteCompanyService(companyId, userId)
     return res.status(HTTPSTATUS.OK).json({
-        message: 'Company deleted successfully',
-        currentCompany
+        message: 'Company deleted successfully'
+        //currentCompany
     })
 })
 

@@ -7,6 +7,16 @@ import MemberModel from '../member/member.model'
 import RoleModel from '../role/roles-permission.model'
 import { Roles } from '../role/role.enum'
 
+export const getAllCompanyUserIsMemberService = async (userId: string) => {
+    const memberships = await MemberModel.find({ userId })
+        .populate('companyId')
+        .select('-password')
+        .exec()
+    // Extract workspace details from memberships
+    const companies = memberships.map((membership) => membership.companyId)
+    return { companies }
+}
+
 export const createCompanyService = async (userId: string, body: CreateCompanyInputType) => {
     const user = await UserModel.findById(userId)
     if (!user) {
@@ -105,11 +115,14 @@ export const deleteCompanyService = async (companyId: string, userId: string) =>
     session.startTransaction()
     try {
         const company = await CompanyModel.findById(companyId).session(session)
+        // console.log('Company to delete:', company)
         if (!company) {
             throw new NotFoundException('Company not found')
         }
-        // Check if the user owns the company
-        if (company.owner.toString() !== userId) {
+
+        // console.log(company.owner.toString(), userId.toString())
+        //Check if the user owns the company
+        if (company.owner.toString() !== userId.toString()) {
             throw new BadRequestException('You are not authorized to delete this company')
         }
         const user = await UserModel.findById(userId).session(session)
