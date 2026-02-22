@@ -47,3 +47,8 @@ export const companyIdSchema = z
 // Extract the type from the schema
 export type CreateCompanyInputType = z.infer<typeof createCompanySchema>
 export type UpdateCompanyInputType = z.infer<typeof updateCompanySchema>
+
+export const changeRoleSchema = z.object({
+    roleId: z.string().trim().min(1),
+    memberId: z.string().trim().min(1)
+})
