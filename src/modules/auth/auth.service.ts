@@ -1,27 +1,29 @@
-import mongoose from "mongoose";
-import UserModel from "../user/user.model";
-import AccountModel from "../user/account.model";
-import { BadRequestException, NotFoundException, UnauthorizedException } from "../../utils/appError";
-import { ProviderEnum } from "../../enums/account-provider.enum";
-
-
-
+import mongoose from 'mongoose'
+import UserModel from '../user/user.model'
+import AccountModel from '../user/account.model'
+import { BadRequestException, NotFoundException, UnauthorizedException } from '../../utils/appError'
+import { ProviderEnum } from '../../enums/account-provider.enum'
+import VerificationCodeModel from '../user/verification.model'
+import { VerificationEnum } from '../../enums/verification-code.enum'
+import { fortyFiveMinutesFromNow } from '../../utils/date-time'
+import { config } from '../../config/app.config'
+import { ErrorCodeEnum } from '../../enums/error-code.enum'
 
 export const loginOrCreateAccountService = async (data: {
-    provider: string;
-    displayName: string;
-    providerId: string;
-    picture?: string;
-    email?: string;
+    provider: string
+    displayName: string
+    providerId: string
+    picture?: string
+    email?: string
 }) => {
-    const { providerId, provider, displayName, email, picture } = data;
-    const session = await mongoose.startSession();
+    const { providerId, provider, displayName, email, picture } = data
+    const session = await mongoose.startSession()
     try {
-        session.startTransaction();
-        console.log("Started Session...");
+        session.startTransaction()
+        console.log('Started Session...')
 
         //check user on db
-        let user = await UserModel.findOne({ email }).session(session);
+        let user = await UserModel.findOne({ email }).session(session)
 
         //jika tidak ada user, maka buat user baru
         if (!user) {
@@ -29,124 +31,164 @@ export const loginOrCreateAccountService = async (data: {
             user = new UserModel({
                 email,
                 name: displayName,
-                profilePicture: picture || null,
-            });
-            await user.save({ session });
+                profilePicture: picture || null
+            })
+            await user.save({ session })
 
             //buat akun baru
             const account = new AccountModel({
                 userId: user._id,
                 provider: provider,
-                providerId: providerId,
-            });
-            await account.save({ session });
+                providerId: providerId
+            })
+            await account.save({ session })
         }
-        await session.commitTransaction();
-        session.endSession();
-        console.log("End Session...");
-        return { user };
+        await session.commitTransaction()
+        session.endSession()
+        console.log('End Session...')
+        return { user }
     } catch (error) {
-        await session.abortTransaction();
-        throw error;
+        await session.abortTransaction()
+        throw error
     } finally {
-        session.endSession();
+        session.endSession()
     }
-};
-
+}
 
 /**
  * Service to handle new user registration and account creation
  */
 export const registerUserService = async (body: {
-    email: string;
-    name: string;
-    password: string;
+    email: string
+    name: string
+    password: string
 }) => {
-    const { email, name, password } = body;
+    const { email, name, password } = body
     // Create a Mongoose session for the transaction
-    const session = await mongoose.startSession();
+    const session = await mongoose.startSession()
     try {
         // Start the atomic transaction
-        session.startTransaction();
-        console.log("🏁 [TRANSACTION] Registration started...");
+        session.startTransaction()
+        console.log('🏁 [TRANSACTION] Registration started...')
         // 1. Search for existing user with the same email within the session
-        const existingUser = await UserModel.findOne({ email }).session(session);
+        const existingUser = await UserModel.findOne({ email }).session(session)
         // 2. If a user is found, prevent duplicate registration
         if (existingUser) {
-            console.log(`⚠️[AUTH] Registration failed: Email ${email} already exists.`);
-            throw new BadRequestException("Email already exists");
+            console.log(`⚠️[AUTH] Registration failed: Email ${email} already exists.`)
+            throw new BadRequestException('Email already exists')
         }
         // 3. Initialize a new User document (middleware handles password hashing)
         const user = new UserModel({
             email,
             name,
-            password,
-        });
+            password
+        })
         // 4. Save the user document as part of the transaction
-        await user.save({ session });
+        await user.save({ session })
 
         // 5. Initialize the associated Account (Auth Provider) for the user
         const account = new AccountModel({
             userId: user._id,
             provider: ProviderEnum.EMAIL,
-            providerId: email,
-        });
+            providerId: email
+        })
         // 6. Save the account document as part of the transaction
-        await account.save({ session });
-        // 7. Commit all changes to the database permanently
-        await session.commitTransaction();
-        session.endSession();
-        console.log("✅ [TRANSACTION] Registration successful and committed.");
-        return {
+        await account.save({ session })
+
+        const verification = await VerificationCodeModel.create({
             userId: user._id,
-        };
-    } catch (error:any) {
-        await session.abortTransaction();
-        console.error("❌ [TRANSACTION] Registration aborted due to error:", error.message);
-        throw error;
-    }finally{
-        session.endSession();
+            type: VerificationEnum.EMAIL_VERIFICATION,
+            expiresAt: fortyFiveMinutesFromNow()
+        })
+
+        const verificationUrl = `${config.FRONTEND_ORIGIN}/confirm-account?code=${verification.code}`
+        //TODO: Send verification email with the verificationUrl
+        console.log(`Verification URL (send this to user via email): ${verificationUrl}`)
+        // 7. Commit all changes to the database permanently
+        await session.commitTransaction()
+        session.endSession()
+        console.log('✅ [TRANSACTION] Registration successful and committed.')
+        return {
+            userId: user._id
+        }
+    } catch (error: any) {
+        await session.abortTransaction()
+        console.error('❌ [TRANSACTION] Registration aborted due to error:', error.message)
+        throw error
+    } finally {
+        session.endSession()
     }
-};
+}
+
+export const verifyEmailService = async (code: string) => {
+    // 1. Find the verification code document that matches the provided code, is of type EMAIL_VERIFICATION, and has not expired
+    const validCode = await VerificationCodeModel.findOne({
+        code: code,
+        type: VerificationEnum.EMAIL_VERIFICATION,
+        expiresAt: { $gt: new Date() }
+    })
+
+    if (!validCode) {
+        throw new BadRequestException('Invalid or expired verification code')
+    }
+
+    const updatedUser = await UserModel.findByIdAndUpdate(
+        validCode.userId,
+        {
+            isEmailVerified: true
+        },
+        { new: true }
+    )
+
+    if (!updatedUser) {
+        throw new BadRequestException(
+            'Unable to verify email address',
+            ErrorCodeEnum.VALIDATION_ERROR
+        )
+    }
+
+    await validCode.deleteOne()
+    return {
+        user: updatedUser
+    }
+}
 
 export const verifyUserService = async ({
     email,
     password,
-    provider = ProviderEnum.EMAIL,
+    provider = ProviderEnum.EMAIL
 }: {
-    email: string;
-    password: string;
-    provider?: string;
-    }) => {
+    email: string
+    password: string
+    provider?: string
+}) => {
     //check account di database dengan pencocokan email
-    const account = await AccountModel.findOne({ provider, providerId: email });
+    const account = await AccountModel.findOne({ provider, providerId: email })
 
     //jika account tidak ditemukan, maka tampilkan error
     if (!account) {
-        throw new NotFoundException("Invalid email or password");
+        throw new NotFoundException('Invalid email or password')
     }
 
     //check password
-    const user = await UserModel.findById(account.userId);
+    const user = await UserModel.findById(account.userId)
     //jika user tidak ditemukan, maka tampilkan error
     if (!user) {
-        throw new NotFoundException("User not found for the given account");
+        throw new NotFoundException('User not found for the given account')
     }
 
     //check password
-    const isMatch = await user.comparePassword(password);
+    const isMatch = await user.comparePassword(password)
     //jika password tidak cocok, maka tampilkan error
     if (!isMatch) {
-        throw new UnauthorizedException("Invalid email or password");
+        throw new UnauthorizedException('Invalid email or password')
     }
-    return user.omitPassword();
-};
+    return user.omitPassword()
+}
 
 export const verifyUserByIdService = async (userId: string) => {
-    const user = await UserModel.findById(userId,{
-        password:false
-    });
-    return user || null;
-};
-
-
+    const user = await UserModel.findById(userId, {
+        password: false
+    })
+    return user || null
+}

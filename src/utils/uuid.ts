@@ -1,9 +1,17 @@
-import { v4 as uuidv4 } from "uuid";
+import { v4 as uuidv4 } from 'uuid'
 
 export function generateInviteCode() {
-    return uuidv4().replace(/-/g, "").substring(0, 8);
+    return uuidv4().replace(/-/g, '').substring(0, 8)
 }
 
 export function generateTaskCode() {
-    return `task-${uuidv4().replace(/-/g, "").substring(0, 3)}`;
+    return `task-${uuidv4().replace(/-/g, '').substring(0, 3)}`
+}
+
+export function generateVerifyCode() {
+    // Generates: [25 chars]-vfy
+    const randomPart = uuidv4().replace(/-/g, '').substring(0, 25)
+    const suffix = 'vfy'
+
+    return `${randomPart}-${suffix}`
 }
