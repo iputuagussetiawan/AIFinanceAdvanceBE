@@ -248,7 +248,7 @@ export const forgotPasswordService = async (email: string) => {
     })
 
     if (!data?.id) {
-        throw new InternalServerException(`${error?.name} ${error?.message}`)
+        throw new InternalServerException(`From Email :${error?.name} ${error?.message}`)
     }
 
     return {
