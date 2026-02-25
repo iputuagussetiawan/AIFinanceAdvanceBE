@@ -65,32 +65,66 @@ export const verifyEmailTemplate = (url: string, brandColor: string = '#2563EB')
 })
 
 export const passwordResetTemplate = (url: string, brandColor: string = '#2563EB') => ({
-    subject: 'Reset Your Password',
-    text: `To reset your password, please click the following link: ${url}`,
+    subject: 'Reset Your Password - Squeezy',
+    // Plain text version for better deliverability and accessibility
+    text: `We received a request to reset your password. Click the following link to proceed: ${url}`,
     html: `
-      <html><head><style>
-        body, html { margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4; color: #333333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff; border-radius: 8px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); }
-        .header { background-color: ${brandColor}; font-size: 24px;  font-weight:bold; color: #ffffff; padding: 20px; text-align: center; border-top-left-radius: 8px; border-top-right-radius: 8px; }
-        .header img { max-width: 40px; margin-bottom: 10px; }
-        .content { padding: 20px; text-align: center; }
-        .content h1 { font-size: 24px; color: #333333; }
-        .content p { font-size: 16px; color: #666666; margin: 10px 0 20px; }
-        .button { display: inline-block; padding: 15px 25px; font-size: 16px; font-weight: bold; background-color: ${brandColor};  color: #fff !important; border-radius: 5px; text-decoration: none; margin-top: 20px; }
-        .footer { font-size: 14px; color: #999999; text-align: center; padding: 20px; }
-      </style></head><body>
-        <div class="container">
-          <div class="header">AI Finance Assistant</div>
-          <div class="content">
-            <h1>Reset Your Password</h1>
-            <p>We received a request to reset your password. Click the button below to proceed with resetting your password.</p>
-            <a href="${url}" class="button">Reset Password</a>
-            <p>If you did not request a password reset, you can safely ignore this email.</p>
-          </div>
-          <div class="footer">
-            <p>If you have any questions, feel free to reply to this email or contact our support team.</p>
-          </div>
-        </div>
-      </body></html>
-    `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+      <table width="100%" border="0" cellspacing="0" cellpadding="0">
+        <tr>
+          <td align="center" style="padding: 40px 10px;">
+            <table width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 16px; border: 1px solid #e5e7eb; overflow: hidden;">
+              
+              <tr>
+                <td style="padding: 32px 40px; text-align: center; border-bottom: 1px solid #f3f4f6;">
+                  <div style="font-size: 24px; font-weight: 800; color: ${brandColor};">Squeezy</div>
+                  <div style="font-size: 12px; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px;">Security Services</div>
+                </td>
+              </tr>
+
+              <tr>
+                <td style="padding: 40px;">
+                  <h1 style="font-size: 24px; font-weight: 700; color: #111827; margin: 0 0 16px 0;">Reset your password</h1>
+                  <p style="font-size: 16px; line-height: 1.6; color: #4b5563; margin: 0 0 24px 0;">
+                    We received a request to reset the password for your Squeezy account. No worries, it happens to the best of us! Click the button below to set a new one.
+                  </p>
+                  
+                  <div style="text-align: center; margin-bottom: 32px;">
+                    <a href="${url}" style="background-color: ${brandColor}; color: #ffffff; padding: 16px 32px; font-size: 16px; font-weight: 600; text-decoration: none; border-radius: 10px; display: inline-block;">
+                      Reset Password
+                    </a>
+                  </div>
+
+                  <p style="font-size: 14px; color: #6b7280; background-color: #fef2f2; border: 1px solid #fee2e2; padding: 16px; border-radius: 8px; margin: 0;">
+                    <strong>Security Note:</strong> This link will expire in 60 minutes. If you didn't request this, please ignore this email or contact support if you're concerned about your account security.
+                  </p>
+                </td>
+              </tr>
+
+              <tr>
+                <td style="padding: 32px 40px; background-color: #fafafa; text-align: center; border-top: 1px solid #f3f4f6;">
+                  <p style="margin: 0 0 16px 0; font-size: 14px; color: #4b5563;">
+                    <a href="#" style="color: ${brandColor}; text-decoration: none;">Help Center</a> &nbsp;&bull;&nbsp; 
+                    <a href="#" style="color: ${brandColor}; text-decoration: none;">Security Tips</a>
+                  </p>
+                  <p style="font-size: 12px; color: #9ca3af; line-height: 1.5; margin: 0;">
+                    Squeezy Inc. &bull; 123 Tech Lane, SF.<br>
+                    &copy; 2026 Squeezy. All rights reserved.
+                  </p>
+                </td>
+              </tr>
+
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `
 })
