@@ -4,8 +4,8 @@ import passport from 'passport'
 import { config } from '../../config/app.config'
 import { signJwtToken } from '../../utils/jwt'
 import { asyncHandler } from '../../middlewares/asyncHandler.middleware'
-import { registerSchema } from './auth.validation'
-import { registerUserService } from './auth.service'
+import { emailSchema, registerSchema, verificationEmailSchema } from './auth.validation'
+import { forgotPasswordService, registerUserService, verifyEmailService } from './auth.service'
 import { HTTPSTATUS } from '../../config/http.config'
 
 export const googleLoginCallback = (req: Request, res: Response) => {
@@ -28,7 +28,7 @@ export const googleLoginCallback = (req: Request, res: Response) => {
         res.cookie('accessToken', access_token, {
             httpOnly: true, // Prevents JavaScript from reading the cookie
             secure: process.env.NODE_ENV === 'production', // Only send over HTTPS in production
-            sameSite: 'strict', // Prevents CSRF attacks
+            sameSite: 'lax', // Prevents CSRF attacks
             maxAge: 24 * 60 * 60 * 1000, // 1 day in milliseconds
             path: '/' // Cookie available for all routes
         })
@@ -51,6 +51,16 @@ export const registerUserController = asyncHandler(async (req: Request, res: Res
         message: 'User created successfully'
     })
 })
+
+export const verifyEmailController = asyncHandler(
+    async (req: Request, res: Response): Promise<any> => {
+        const { code } = verificationEmailSchema.parse(req.body)
+        await verifyEmailService(code)
+        return res.status(HTTPSTATUS.OK).json({
+            message: 'Email verified successfully'
+        })
+    }
+)
 
 export const loginController = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
@@ -85,7 +95,7 @@ export const loginController = asyncHandler(
                 res.cookie('accessToken', access_token, {
                     httpOnly: true,
                     secure: process.env.NODE_ENV === 'production', // HTTPS only in prod
-                    sameSite: 'strict', // Protection against CSRF
+                    sameSite: 'lax', // Protection against CSRF
                     maxAge: 24 * 60 * 60 * 1000, // 1 day expiration
                     path: '/'
                 })
@@ -99,7 +109,13 @@ export const loginController = asyncHandler(
                     user: {
                         _id: user._id,
                         name: user.name,
-                        email: user.email
+                        email: user.email,
+                        profilePicture: user.profilePicture,
+                        isActive: user.isActive,
+                        lastLogin: user.lastLogin,
+                        createdAt: user.createdAt,
+                        updatedAt: user.updatedAt,
+                        currentCompany: user.currentCompany
                     },
                     access_token // Optional: useful if you want to store it in memory
                 })
@@ -114,7 +130,7 @@ export const logOutController = asyncHandler(async (req: Request, res: Response)
     res.cookie('accessToken', '', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
+        sameSite: 'lax',
         expires: new Date(0), // Instantly expires the cookie in the browser
         path: '/' // Ensure it clears the cookie for the entire domain
     })
@@ -134,3 +150,13 @@ export const logOutController = asyncHandler(async (req: Request, res: Response)
         message: 'Logged out successfully'
     })
 })
+
+export const forgotPasswordController = asyncHandler(
+    async (req: Request, res: Response): Promise<any> => {
+        const email = emailSchema.parse(req.body.email)
+        await forgotPasswordService(email)
+        return res.status(HTTPSTATUS.OK).json({
+            message: 'Password reset email sent'
+        })
+    }
+)

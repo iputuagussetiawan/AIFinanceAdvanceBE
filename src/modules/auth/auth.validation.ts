@@ -14,3 +14,8 @@ export const loginSchema = z.object({
     email: emailSchema,
     password: passwordSchema
 })
+
+export const verificationCodeSchema = z.string().trim().min(1).max(25)
+export const verificationEmailSchema = z.object({
+    code: verificationCodeSchema
+})

@@ -33,7 +33,8 @@ app.use(passport.initialize())
 app.use(
     cors({
         origin: config.FRONTEND_ORIGIN,
-        credentials: true
+        credentials: true,
+        allowedHeaders: ['Content-Type', 'Authorization']
     })
 )
 

@@ -1,8 +1,22 @@
 import mongoose from 'mongoose'
 import UserModel from '../user/user.model'
 import AccountModel from '../user/account.model'
-import { BadRequestException, NotFoundException, UnauthorizedException } from '../../utils/appError'
+import {
+    BadRequestException,
+    HttpException,
+    InternalServerException,
+    NotFoundException,
+    UnauthorizedException
+} from '../../utils/appError'
 import { ProviderEnum } from '../../enums/account-provider.enum'
+import VerificationCodeModel from '../user/verification.model'
+import { VerificationEnum } from '../../enums/verification-code.enum'
+import { anHourFromNow, fortyFiveMinutesFromNow, threeMinutesAgo } from '../../utils/date-time'
+import { config } from '../../config/app.config'
+import { ErrorCodeEnum } from '../../enums/error-code.enum'
+import { sendEmail } from '../../mailers/mailer'
+import { passwordResetTemplate, verifyEmailTemplate } from '../../mailers/templates/template'
+import { HTTPSTATUS } from '../../config/http.config'
 
 export const loginOrCreateAccountService = async (data: {
     provider: string
@@ -89,6 +103,20 @@ export const registerUserService = async (body: {
         })
         // 6. Save the account document as part of the transaction
         await account.save({ session })
+
+        const verification = await VerificationCodeModel.create({
+            userId: user._id,
+            type: VerificationEnum.EMAIL_VERIFICATION,
+            expiresAt: fortyFiveMinutesFromNow()
+        })
+
+        const verificationUrl = `${config.FRONTEND_ORIGIN}/confirm-account?code=${verification.code}`
+        //TODO: Send verification email with the verificationUrl
+        await sendEmail({
+            to: user.email,
+            ...verifyEmailTemplate(verificationUrl)
+        })
+        console.log(`Verification URL (send this to user via email): ${verificationUrl}`)
         // 7. Commit all changes to the database permanently
         await session.commitTransaction()
         session.endSession()
@@ -102,6 +130,39 @@ export const registerUserService = async (body: {
         throw error
     } finally {
         session.endSession()
+    }
+}
+
+export const verifyEmailService = async (code: string) => {
+    // 1. Find the verification code document that matches the provided code, is of type EMAIL_VERIFICATION, and has not expired
+    const validCode = await VerificationCodeModel.findOne({
+        code: code,
+        type: VerificationEnum.EMAIL_VERIFICATION,
+        expiresAt: { $gt: new Date() }
+    })
+
+    if (!validCode) {
+        throw new BadRequestException('Invalid or expired verification code')
+    }
+
+    const updatedUser = await UserModel.findByIdAndUpdate(
+        validCode.userId,
+        {
+            isEmailVerified: true
+        },
+        { new: true }
+    )
+
+    if (!updatedUser) {
+        throw new BadRequestException(
+            'Unable to verify email address',
+            ErrorCodeEnum.VALIDATION_ERROR
+        )
+    }
+
+    await validCode.deleteOne()
+    return {
+        user: updatedUser
     }
 }
 
@@ -143,4 +204,55 @@ export const verifyUserByIdService = async (userId: string) => {
         password: false
     })
     return user || null
+}
+
+export const forgotPasswordService = async (email: string) => {
+    const user = await UserModel.findOne({
+        email: email
+    })
+
+    if (!user) {
+        throw new NotFoundException('User not found')
+    }
+
+    //check mail rate limit is 2 emails per 3 or 10 min
+    const timeAgo = threeMinutesAgo()
+    const maxAttempts = 2
+
+    const count = await VerificationCodeModel.countDocuments({
+        userId: user._id,
+        type: VerificationEnum.PASSWORD_RESET,
+        createdAt: { $gt: timeAgo }
+    })
+
+    if (count >= maxAttempts) {
+        throw new HttpException(
+            'Too many request, try again later',
+            HTTPSTATUS.TOO_MANY_REQUESTS,
+            ErrorCodeEnum.AUTH_TOO_MANY_ATTEMPTS
+        )
+    }
+
+    const expiresAt = anHourFromNow()
+    const validCode = await VerificationCodeModel.create({
+        userId: user._id,
+        type: VerificationEnum.PASSWORD_RESET,
+        expiresAt
+    })
+
+    const resetLink = `${config.FRONTEND_ORIGIN}/reset-password?code=${validCode.code}&exp=${expiresAt.getTime()}`
+
+    const { data, error } = await sendEmail({
+        to: user.email,
+        ...passwordResetTemplate(resetLink)
+    })
+
+    if (!data?.id) {
+        throw new InternalServerException(`${error?.name} ${error?.message}`)
+    }
+
+    return {
+        url: resetLink,
+        emailId: data.id
+    }
 }

@@ -6,6 +6,7 @@ export interface UserDocument extends Document {
     email: string
     password?: string
     profilePicture: string | null
+    isEmailVerified: boolean
     isActive: boolean
     lastLogin: Date | null
     currentCompany: mongoose.Types.ObjectId | null
@@ -37,6 +38,10 @@ const userSchema = new Schema<UserDocument>(
         currentCompany: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Company'
+        },
+        isEmailVerified: {
+            type: Boolean,
+            default: false
         },
         isActive: { type: Boolean, default: true },
         lastLogin: { type: Date, default: null }
