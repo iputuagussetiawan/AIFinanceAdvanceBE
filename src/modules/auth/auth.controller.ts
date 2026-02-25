@@ -4,8 +4,8 @@ import passport from 'passport'
 import { config } from '../../config/app.config'
 import { signJwtToken } from '../../utils/jwt'
 import { asyncHandler } from '../../middlewares/asyncHandler.middleware'
-import { registerSchema, verificationEmailSchema } from './auth.validation'
-import { registerUserService, verifyEmailService } from './auth.service'
+import { emailSchema, registerSchema, verificationEmailSchema } from './auth.validation'
+import { forgotPasswordService, registerUserService, verifyEmailService } from './auth.service'
 import { HTTPSTATUS } from '../../config/http.config'
 
 export const googleLoginCallback = (req: Request, res: Response) => {
@@ -150,3 +150,13 @@ export const logOutController = asyncHandler(async (req: Request, res: Response)
         message: 'Logged out successfully'
     })
 })
+
+export const forgotPasswordController = asyncHandler(
+    async (req: Request, res: Response): Promise<any> => {
+        const email = emailSchema.parse(req.body.email)
+        await forgotPasswordService(email)
+        return res.status(HTTPSTATUS.OK).json({
+            message: 'Password reset email sent'
+        })
+    }
+)
