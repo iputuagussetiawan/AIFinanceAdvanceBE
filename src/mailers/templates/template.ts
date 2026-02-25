@@ -65,7 +65,7 @@ export const verifyEmailTemplate = (url: string, brandColor: string = '#2563EB')
 })
 
 export const passwordResetTemplate = (url: string, brandColor: string = '#2563EB') => ({
-    subject: 'Reset Your Password - Squeezy',
+    subject: 'Reset Your Password - AI Finnace Assistant',
     // Plain text version for better deliverability and accessibility
     text: `We received a request to reset your password. Click the following link to proceed: ${url}`,
     html: `
@@ -83,7 +83,7 @@ export const passwordResetTemplate = (url: string, brandColor: string = '#2563EB
               
               <tr>
                 <td style="padding: 32px 40px; text-align: center; border-bottom: 1px solid #f3f4f6;">
-                  <div style="font-size: 24px; font-weight: 800; color: ${brandColor};">Squeezy</div>
+                  <div style="font-size: 24px; font-weight: 800; color: ${brandColor};">AI Finnace Assistant</div>
                   <div style="font-size: 12px; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px;">Security Services</div>
                 </td>
               </tr>
@@ -92,7 +92,7 @@ export const passwordResetTemplate = (url: string, brandColor: string = '#2563EB
                 <td style="padding: 40px;">
                   <h1 style="font-size: 24px; font-weight: 700; color: #111827; margin: 0 0 16px 0;">Reset your password</h1>
                   <p style="font-size: 16px; line-height: 1.6; color: #4b5563; margin: 0 0 24px 0;">
-                    We received a request to reset the password for your Squeezy account. No worries, it happens to the best of us! Click the button below to set a new one.
+                    We received a request to reset the password for your AI Finnace Assistant account. No worries, it happens to the best of us! Click the button below to set a new one.
                   </p>
                   
                   <div style="text-align: center; margin-bottom: 32px;">
@@ -114,8 +114,8 @@ export const passwordResetTemplate = (url: string, brandColor: string = '#2563EB
                     <a href="#" style="color: ${brandColor}; text-decoration: none;">Security Tips</a>
                   </p>
                   <p style="font-size: 12px; color: #9ca3af; line-height: 1.5; margin: 0;">
-                    Squeezy Inc. &bull; 123 Tech Lane, SF.<br>
-                    &copy; 2026 Squeezy. All rights reserved.
+                    AI Finnace Assistant Inc. &bull; 123 Tech Lane, SF.<br>
+                    &copy; 2026 AI Finnace Assistant. All rights reserved.
                   </p>
                 </td>
               </tr>
