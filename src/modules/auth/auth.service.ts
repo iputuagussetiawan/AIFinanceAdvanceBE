@@ -17,6 +17,8 @@ import { ErrorCodeEnum } from '../../enums/error-code.enum'
 import { sendEmail } from '../../mailers/mailer'
 import { passwordResetTemplate, verifyEmailTemplate } from '../../mailers/templates/template'
 import { HTTPSTATUS } from '../../config/http.config'
+import type { ResetPasswordDto } from './auth.validation'
+import { hashValue } from '../../utils/bcrypt'
 
 export const loginOrCreateAccountService = async (data: {
     provider: string
@@ -254,5 +256,27 @@ export const forgotPasswordService = async (email: string) => {
     return {
         url: resetLink,
         emailId: data.id
+    }
+}
+
+export const resetPasswordService = async ({ password, verificationCode }: ResetPasswordDto) => {
+    const validCode = await VerificationCodeModel.findOne({
+        code: verificationCode,
+        type: VerificationEnum.PASSWORD_RESET,
+        expiresAt: { $gt: new Date() }
+    })
+    if (!validCode) {
+        throw new NotFoundException('Invalid or expired verification code')
+    }
+    const hashedPassword = await hashValue(password)
+    const updatedUser = await UserModel.findByIdAndUpdate(validCode.userId, {
+        password: hashedPassword
+    })
+    if (!updatedUser) {
+        throw new BadRequestException('Failed to reset password!')
+    }
+    await validCode.deleteOne()
+    return {
+        user: updatedUser
     }
 }

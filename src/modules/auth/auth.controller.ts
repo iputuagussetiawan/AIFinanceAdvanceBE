@@ -4,8 +4,18 @@ import passport from 'passport'
 import { config } from '../../config/app.config'
 import { signJwtToken } from '../../utils/jwt'
 import { asyncHandler } from '../../middlewares/asyncHandler.middleware'
-import { emailSchema, registerSchema, verificationEmailSchema } from './auth.validation'
-import { forgotPasswordService, registerUserService, verifyEmailService } from './auth.service'
+import {
+    emailSchema,
+    registerSchema,
+    resetPasswordSchema,
+    verificationEmailSchema
+} from './auth.validation'
+import {
+    forgotPasswordService,
+    registerUserService,
+    resetPasswordService,
+    verifyEmailService
+} from './auth.service'
 import { HTTPSTATUS } from '../../config/http.config'
 
 export const googleLoginCallback = (req: Request, res: Response) => {
@@ -157,6 +167,23 @@ export const forgotPasswordController = asyncHandler(
         await forgotPasswordService(email)
         return res.status(HTTPSTATUS.OK).json({
             message: 'Password reset email sent'
+        })
+    }
+)
+
+export const resetPasswordController = asyncHandler(
+    async (req: Request, res: Response): Promise<any> => {
+        const body = resetPasswordSchema.parse(req.body)
+        await resetPasswordService(body)
+        res.cookie('accessToken', '', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            expires: new Date(0), // Instantly expires the cookie in the browser
+            path: '/' // Ensure it clears the cookie for the entire domain
+        })
+        return res.status(HTTPSTATUS.OK).json({
+            message: 'Password reset successfully'
         })
     }
 )
