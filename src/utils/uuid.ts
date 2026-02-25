@@ -9,9 +9,8 @@ export function generateTaskCode() {
 }
 
 export function generateVerifyCode() {
-    // Generates: [25 chars]-vfy
-    const randomPart = uuidv4().replace(/-/g, '').substring(0, 25)
-    const suffix = 'vfy'
-
-    return `${randomPart}-${suffix}`
+    // Generates: [20 chars]-vfy
+    const randomPart = uuidv4().replace(/-/g, '').substring(0, 15)
+    const prefix = 'vfy'
+    return `${prefix}-${randomPart}`
 }

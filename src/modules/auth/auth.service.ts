@@ -8,6 +8,8 @@ import { VerificationEnum } from '../../enums/verification-code.enum'
 import { fortyFiveMinutesFromNow } from '../../utils/date-time'
 import { config } from '../../config/app.config'
 import { ErrorCodeEnum } from '../../enums/error-code.enum'
+import { sendEmail } from '../../mailers/mailer'
+import { verifyEmailTemplate } from '../../mailers/templates/template'
 
 export const loginOrCreateAccountService = async (data: {
     provider: string
@@ -103,6 +105,10 @@ export const registerUserService = async (body: {
 
         const verificationUrl = `${config.FRONTEND_ORIGIN}/confirm-account?code=${verification.code}`
         //TODO: Send verification email with the verificationUrl
+        await sendEmail({
+            to: user.email,
+            ...verifyEmailTemplate(verificationUrl)
+        })
         console.log(`Verification URL (send this to user via email): ${verificationUrl}`)
         // 7. Commit all changes to the database permanently
         await session.commitTransaction()
