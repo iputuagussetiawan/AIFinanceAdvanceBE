@@ -7,6 +7,7 @@ import {
     loginController,
     logOutController,
     registerUserController,
+    resetPasswordController,
     verifyEmailController
 } from './auth.controller'
 
@@ -15,6 +16,7 @@ const authRoutes = Router()
 authRoutes.post('/register', registerUserController)
 authRoutes.post('/verify/email', verifyEmailController)
 authRoutes.post('/password/forgot', forgotPasswordController)
+authRoutes.post('/password/reset', resetPasswordController)
 authRoutes.post('/login', loginController)
 authRoutes.post('/logout', logOutController)
 
