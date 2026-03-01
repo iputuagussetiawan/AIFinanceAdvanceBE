@@ -2,9 +2,11 @@ import jwt, { SignOptions } from 'jsonwebtoken'
 
 import { config } from '../config/app.config'
 import type { UserDocument } from '../modules/user/user.model'
+import type { SessionDocument } from '../modules/session/session.model'
 
 export type AccessTPayload = {
     userId: UserDocument['_id']
+    sessionId?: SessionDocument['_id']
 }
 
 type SignOptsAndSecret = SignOptions & {
@@ -16,7 +18,7 @@ const defaults: SignOptions = {
 }
 
 export const accessTokenSignOptions: SignOptsAndSecret = {
-    expiresIn: '1d',
+    expiresIn: config.JWT_EXPIRES_IN as any,
     secret: config.JWT_SECRET
 }
 

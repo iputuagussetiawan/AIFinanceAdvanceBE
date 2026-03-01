@@ -17,11 +17,17 @@ import {
     verifyEmailService
 } from './auth.service'
 import { HTTPSTATUS } from '../../config/http.config'
+import SessionModel from '../session/session.model'
 
-export const googleLoginCallback = (req: Request, res: Response) => {
+export const googleLoginCallback = async (req: Request, res: Response) => {
     try {
         // 1. Passport attaches the user to req.user after successful strategy
+        const userAgent = req.headers['user-agent']
         const user = req.user as any
+        const session = await SessionModel.create({
+            userId: user._id,
+            userAgent
+        })
 
         if (!user) {
             console.log('⚠️[AUTH] Google authentication failed: No user found.')
@@ -78,7 +84,7 @@ export const loginController = asyncHandler(
         passport.authenticate(
             'local',
             { session: false },
-            (
+            async (
                 err: Error | null,
                 user: any, // Use your AuthenticatedUser interface here
                 info: { message: string } | undefined
@@ -97,8 +103,14 @@ export const loginController = asyncHandler(
                     })
                 }
 
+                const userAgent = req.headers['user-agent']
+                const session = await SessionModel.create({
+                    userId: user._id,
+                    userAgent
+                })
+
                 // 3. Generate the JWT
-                const access_token = signJwtToken({ userId: user._id })
+                const access_token = signJwtToken({ userId: user._id, sessionId: session._id })
 
                 // 4. Set the HttpOnly Cookie
                 // This 'bakes' the token into the browser so it's sent automatically
@@ -113,6 +125,7 @@ export const loginController = asyncHandler(
                 console.log(`✅ [AUTH] User logged in: ${user.email}`)
 
                 // 5. Return success (Notice we still return access_token for debugging,
+
                 // but the browser will primarily use the cookie)
                 return res.status(HTTPSTATUS.OK).json({
                     message: 'Logged in successfully',
@@ -135,27 +148,29 @@ export const loginController = asyncHandler(
 )
 
 export const logOutController = asyncHandler(async (req: Request, res: Response) => {
-    // 1. Clear the HttpOnly cookie
-    // We set the value to an empty string and the expiry to a date in the past
-    res.cookie('accessToken', '', {
+    // 1. Grab the ID attached by your middleware
+    const sessionId = req.sessionId
+
+    // 2. Delete from DB (The most important part for security)
+    if (sessionId) {
+        console.log(sessionId)
+        await SessionModel.findByIdAndDelete(sessionId)
+        console.log('success delete session')
+    } else {
+        console.warn('⚠️ [AUTH] Logout called but no sessionId found in request.')
+    }
+
+    // 3. Clear the Cookie
+    res.clearCookie('accessToken', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        expires: new Date(0), // Instantly expires the cookie in the browser
-        path: '/' // Ensure it clears the cookie for the entire domain
+        path: '/'
     })
 
-    // 2. Clear Passport's internal user object if it exists
-    if (typeof req.logout === 'function') {
-        req.logout((err) => {
-            if (err) console.error('⚠️ [AUTH] Passport logout cleanup error:', err)
-        })
-    }
+    // 4. Cleanup local objects
+    req.user = undefined
 
-    // 3. Professional logging
-    console.log('👋 [AUTH] User logged out successfully. Cookie cleared.')
-
-    // 4. Return clean response
     return res.status(HTTPSTATUS.OK).json({
         message: 'Logged out successfully'
     })

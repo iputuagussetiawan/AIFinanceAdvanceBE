@@ -15,13 +15,15 @@ import {
 
 interface JwtPayload {
     userId: string
+    sessionId: string
 }
 
 const options: StrategyOptions = {
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
     secretOrKey: config.JWT_SECRET,
     audience: ['user'],
-    algorithms: ['HS256']
+    algorithms: ['HS256'],
+    passReqToCallback: true
 }
 
 passport.use(
@@ -77,12 +79,13 @@ passport.use(
 )
 
 passport.use(
-    new JwtStrategy(options, async (payload: JwtPayload, done) => {
+    new JwtStrategy(options, async (req, payload: JwtPayload, done) => {
         try {
             const user = await verifyUserByIdService(payload.userId)
             if (!user) {
                 return done(null, false)
             }
+            req.sessionId = payload.sessionId
             return done(null, user)
         } catch (error: any) {
             return done(error, false, { message: error?.message })
