@@ -104,10 +104,22 @@ export const loginController = asyncHandler(
                 }
 
                 const userAgent = req.headers['user-agent']
-                const session = await SessionModel.create({
-                    userId: user._id,
-                    userAgent
-                })
+                // 1. Look for an existing session for this user on this browser
+                // 2. If found, update the 'updatedAt' timestamp
+                // 3. If not found, create a new one (upsert: true)
+                const session = await SessionModel.findOneAndUpdate(
+                    {
+                        userId: user._id,
+                        userAgent: userAgent
+                    },
+                    {
+                        $set: { updatedAt: new Date() }
+                    },
+                    {
+                        upsert: true,
+                        new: true
+                    }
+                )
 
                 // 3. Generate the JWT
                 const access_token = signJwtToken({ userId: user._id, sessionId: session._id })

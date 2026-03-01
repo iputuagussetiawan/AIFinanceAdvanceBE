@@ -15,8 +15,10 @@ import userRoutes from './modules/user/user.route'
 import authRoutes from './modules/auth/auth.route'
 import memberRoutes from './modules/member/member.route'
 import sessionRoutes from './modules/session/session.route'
+import cookieParser from 'cookie-parser'
 
 const app = express()
+app.use(cookieParser())
 const BASE_PATH = config.BASE_PATH
 
 // This middleware looks at incoming requests where the Content-Type is 'application/json'.
