@@ -10,6 +10,7 @@ import {
     resetPasswordController,
     verifyEmailController
 } from './auth.controller'
+import { passportAuthenticateJWT } from '../../config/passport.config'
 
 const failedUrl = `${config.FRONTEND_GOOGLE_CALLBACK_URL}?status=failure`
 const authRoutes = Router()
@@ -18,7 +19,7 @@ authRoutes.post('/verify/email', verifyEmailController)
 authRoutes.post('/password/forgot', forgotPasswordController)
 authRoutes.post('/password/reset', resetPasswordController)
 authRoutes.post('/login', loginController)
-authRoutes.post('/logout', logOutController)
+authRoutes.post('/logout', passportAuthenticateJWT, logOutController)
 
 authRoutes.get(
     '/google',

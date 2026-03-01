@@ -14,6 +14,7 @@ import companyRoutes from './modules/company/company.route'
 import userRoutes from './modules/user/user.route'
 import authRoutes from './modules/auth/auth.route'
 import memberRoutes from './modules/member/member.route'
+import sessionRoutes from './modules/session/session.route'
 
 const app = express()
 const BASE_PATH = config.BASE_PATH
@@ -51,6 +52,7 @@ app.use(`${BASE_PATH}/auth`, authRoutes)
 app.use(`${BASE_PATH}/user`, passportAuthenticateJWT, userRoutes)
 app.use(`${BASE_PATH}/company`, passportAuthenticateJWT, companyRoutes)
 app.use(`${BASE_PATH}/member`, passportAuthenticateJWT, memberRoutes)
+app.use(`${BASE_PATH}/session`, passportAuthenticateJWT, sessionRoutes)
 app.use(errorHandler)
 
 app.listen(config.PORT, async () => {
