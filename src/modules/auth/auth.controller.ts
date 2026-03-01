@@ -42,7 +42,7 @@ export const googleLoginCallback = async (req: Request, res: Response) => {
 
         // 3. Set the JWT in a secure HttpOnly Cookie
         res.cookie('accessToken', access_token, {
-            httpOnly: false, // Prevents JavaScript from reading the cookie
+            httpOnly: true, // Prevents JavaScript from reading the cookie
             secure: process.env.NODE_ENV === 'production', // Only send over HTTPS in production
             sameSite: 'lax', // Prevents CSRF attacks
             maxAge: 24 * 60 * 60 * 1000, // 1 day in milliseconds
@@ -127,7 +127,7 @@ export const loginController = asyncHandler(
                 // 4. Set the HttpOnly Cookie
                 // This 'bakes' the token into the browser so it's sent automatically
                 res.cookie('accessToken', access_token, {
-                    httpOnly: false,
+                    httpOnly: true,
                     secure: process.env.NODE_ENV === 'production', // HTTPS only in prod
                     sameSite: 'lax', // Protection against CSRF
                     maxAge: 24 * 60 * 60 * 1000, // 1 day expiration
@@ -174,7 +174,7 @@ export const logOutController = asyncHandler(async (req: Request, res: Response)
 
     // 3. Clear the Cookie
     res.clearCookie('accessToken', {
-        httpOnly: false,
+        httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         path: '/'
@@ -203,7 +203,7 @@ export const resetPasswordController = asyncHandler(
         const body = resetPasswordSchema.parse(req.body)
         await resetPasswordService(body)
         res.cookie('accessToken', '', {
-            httpOnly: false,
+            httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
             expires: new Date(0), // Instantly expires the cookie in the browser
