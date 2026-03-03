@@ -61,8 +61,7 @@ passport.use(
                     picture: picture,
                     email: email
                 })
-                const jwt = signJwtToken({ userId: user._id })
-                req.jwt = jwt
+
                 done(null, user)
             } catch (error) {
                 done(error, false)
