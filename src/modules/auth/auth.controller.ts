@@ -57,24 +57,23 @@ export const googleLoginCallback = async (req: Request, res: Response) => {
         console.log(access_token)
 
         // 3. Set the JWT in a secure HttpOnly Cookie
+        // res.cookie('accessToken', access_token, {
+        //     httpOnly: true, // Prevents JavaScript from reading the cookie
+        //     secure: process.env.NODE_ENV === 'production', // Only send over HTTPS in production
+        //     sameSite: 'lax', // Prevents CSRF attacks
+        //     maxAge: 24 * 60 * 60 * 1000, // 1 day in milliseconds
+        //     path: '/' // Cookie available for all routes
+        // })
+
         res.cookie('accessToken', access_token, {
-            httpOnly: true, // Prevents JavaScript from reading the cookie
-            secure: process.env.NODE_ENV === 'production', // Only send over HTTPS in production
-            sameSite: 'lax', // Prevents CSRF attacks
-            maxAge: 24 * 60 * 60 * 1000, // 1 day in milliseconds
-            path: '/' // Cookie available for all routes
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 24 * 60 * 60 * 1000, // 24 hours
+            sameSite: 'lax'
         })
 
-        // res.cookie('accessToken', access_token, {
-        //     httpOnly: true,
-        //     secure: false,
-        //     sameSite: 'lax',
-        //     maxAge: 24 * 60 * 60 * 1000,
-        //     path: '/',
-        // });
-
         // 4. Redirect to the frontend (No token in the URL!)
-        return res.redirect(`${config.FRONTEND_ORIGIN}/signin?status=success&provider=google`)
+        return res.redirect(`${config.FRONTEND_ORIGIN}/dashboard?status=success&provider=google`)
     } catch (error: any) {
         console.error('❌[AUTH] Callback Error:', error)
         const errorType = error.name === 'NotFoundException' ? 'user_not_found' : 'server_error'
