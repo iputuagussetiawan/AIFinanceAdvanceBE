@@ -65,6 +65,7 @@ export const googleLoginCallback = async (req: Request, res: Response) => {
         //     path: '/' // Cookie available for all routes
         // })
 
+        // 🍪 Cookie Configuration
         res.cookie('accessToken', access_token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',

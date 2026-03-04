@@ -15,7 +15,11 @@ const appConfig = () => ({
     JWT_SECRET: getEnv('JWT_SECRET'),
     JWT_EXPIRES_IN: getEnv('JWT_EXPIRES_IN', '1d'),
     RESEND_API_KEY: getEnv('RESEND_API_KEY'),
-    MAILER_SENDER: getEnv('MAILER_SENDER')
+    MAILER_SENDER: getEnv('MAILER_SENDER'),
+
+    CLOUDINARY_CLOUD_NAME: getEnv('CLOUDINARY_CLOUD_NAME'),
+    CLOUDINARY_API_KEY: getEnv('CLOUDINARY_API_KEY'),
+    CLOUDINARY_API_SECRET: getEnv('CLOUDINARY_API_SECRET')
 })
 
 export const config = appConfig()
