@@ -4,6 +4,7 @@ import { compareValue, hashValue } from '../../utils/bcrypt'
 export interface UserDocument extends Document {
     name: string
     email: string
+    bio?: string
     password?: string
     profilePicture: string | null
     isEmailVerified: boolean
@@ -29,6 +30,10 @@ const userSchema = new Schema<UserDocument>(
             unique: true,
             trim: true,
             lowercase: true
+        },
+        bio: {
+            type: String,
+            required: false
         },
         password: { type: String, select: true },
         profilePicture: {

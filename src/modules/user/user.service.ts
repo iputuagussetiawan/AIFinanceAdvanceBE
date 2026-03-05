@@ -45,7 +45,7 @@ export const updateUserService = async (
     }
 
     user.name = body.name || user.name
-
+    user.bio = body.bio || user.bio
     await user.save()
     return user.omitPassword()
 }
