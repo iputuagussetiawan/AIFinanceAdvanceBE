@@ -24,33 +24,57 @@ export const googleLoginCallback = async (req: Request, res: Response) => {
         // 1. Passport attaches the user to req.user after successful strategy
         const userAgent = req.headers['user-agent']
         const user = req.user as any
-        const session = await SessionModel.create({
-            userId: user._id,
-            userAgent
-        })
+
+        // 1. Look for an existing session for this user on this browser
+        // 2. If found, update the 'updatedAt' timestamp
+        // 3. If not found, create a new one (upsert: true)
 
         if (!user) {
             console.log('⚠️[AUTH] Google authentication failed: No user found.')
             return res.redirect(
-                `${config.FRONTEND_GOOGLE_CALLBACK_URL}?status=error&message=unauthorized`
+                `${config.FRONTEND_ORIGIN}/signin?status=error&message=unauthorized`
             )
         }
 
+        const session = await SessionModel.findOneAndUpdate(
+            {
+                userId: user._id,
+                userAgent: userAgent
+            },
+            {
+                $set: { updatedAt: new Date() }
+            },
+            {
+                upsert: true,
+                new: true
+            }
+        )
+
         // 2. Generate your stateless JWT
-        const access_token = signJwtToken({ userId: user._id })
+        // 3. Generate the JWT
+        const access_token = signJwtToken({ userId: user._id, sessionId: session._id })
         console.log(`✅[AUTH] Issued JWT for Google User: ${user.email}`)
+        console.log(access_token)
 
         // 3. Set the JWT in a secure HttpOnly Cookie
+        // res.cookie('accessToken', access_token, {
+        //     httpOnly: true, // Prevents JavaScript from reading the cookie
+        //     secure: process.env.NODE_ENV === 'production', // Only send over HTTPS in production
+        //     sameSite: 'lax', // Prevents CSRF attacks
+        //     maxAge: 24 * 60 * 60 * 1000, // 1 day in milliseconds
+        //     path: '/' // Cookie available for all routes
+        // })
+
+        // 🍪 Cookie Configuration
         res.cookie('accessToken', access_token, {
-            httpOnly: false, // Prevents JavaScript from reading the cookie
-            secure: process.env.NODE_ENV === 'production', // Only send over HTTPS in production
-            sameSite: 'lax', // Prevents CSRF attacks
-            maxAge: 24 * 60 * 60 * 1000, // 1 day in milliseconds
-            path: '/' // Cookie available for all routes
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 24 * 60 * 60 * 1000, // 24 hours
+            sameSite: 'lax'
         })
 
         // 4. Redirect to the frontend (No token in the URL!)
-        return res.redirect(`${config.FRONTEND_GOOGLE_CALLBACK_URL}?status=success&provider=google`)
+        return res.redirect(`${config.FRONTEND_ORIGIN}/dashboard?status=success&provider=google`)
     } catch (error: any) {
         console.error('❌[AUTH] Callback Error:', error)
         const errorType = error.name === 'NotFoundException' ? 'user_not_found' : 'server_error'
@@ -104,10 +128,22 @@ export const loginController = asyncHandler(
                 }
 
                 const userAgent = req.headers['user-agent']
-                const session = await SessionModel.create({
-                    userId: user._id,
-                    userAgent
-                })
+                // 1. Look for an existing session for this user on this browser
+                // 2. If found, update the 'updatedAt' timestamp
+                // 3. If not found, create a new one (upsert: true)
+                const session = await SessionModel.findOneAndUpdate(
+                    {
+                        userId: user._id,
+                        userAgent: userAgent
+                    },
+                    {
+                        $set: { updatedAt: new Date() }
+                    },
+                    {
+                        upsert: true,
+                        new: true
+                    }
+                )
 
                 // 3. Generate the JWT
                 const access_token = signJwtToken({ userId: user._id, sessionId: session._id })
@@ -115,7 +151,7 @@ export const loginController = asyncHandler(
                 // 4. Set the HttpOnly Cookie
                 // This 'bakes' the token into the browser so it's sent automatically
                 res.cookie('accessToken', access_token, {
-                    httpOnly: false,
+                    httpOnly: true,
                     secure: process.env.NODE_ENV === 'production', // HTTPS only in prod
                     sameSite: 'lax', // Protection against CSRF
                     maxAge: 24 * 60 * 60 * 1000, // 1 day expiration
@@ -162,7 +198,7 @@ export const logOutController = asyncHandler(async (req: Request, res: Response)
 
     // 3. Clear the Cookie
     res.clearCookie('accessToken', {
-        httpOnly: false,
+        httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         path: '/'
@@ -191,7 +227,7 @@ export const resetPasswordController = asyncHandler(
         const body = resetPasswordSchema.parse(req.body)
         await resetPasswordService(body)
         res.cookie('accessToken', '', {
-            httpOnly: false,
+            httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
             expires: new Date(0), // Instantly expires the cookie in the browser

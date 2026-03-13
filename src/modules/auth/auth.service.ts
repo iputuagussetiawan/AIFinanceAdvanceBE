@@ -42,7 +42,8 @@ export const loginOrCreateAccountService = async (data: {
             user = new UserModel({
                 email,
                 name: displayName,
-                profilePicture: picture || null
+                profilePicture: picture || null,
+                isEmailVerified: true
             })
             await user.save({ session })
 
@@ -53,6 +54,10 @@ export const loginOrCreateAccountService = async (data: {
                 providerId: providerId
             })
             await account.save({ session })
+        } else {
+            // 4. Update existing user's lastLogin field
+            user.lastLogin = new Date()
+            await user.save({ session })
         }
         await session.commitTransaction()
         session.endSession()
@@ -113,7 +118,6 @@ export const registerUserService = async (body: {
         })
 
         const verificationUrl = `${config.FRONTEND_ORIGIN}/confirm-account?code=${verification.code}`
-        //TODO: Send verification email with the verificationUrl
         await sendEmail({
             to: user.email,
             ...verifyEmailTemplate(verificationUrl)

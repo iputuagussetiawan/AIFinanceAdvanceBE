@@ -18,8 +18,19 @@ interface JwtPayload {
     sessionId: string
 }
 
+const cookieExtractor = (req: Request) => {
+    let token = null
+    if (req && req.cookies) {
+        token = req.cookies['accessToken'] // Matches the name in your loginController
+    }
+    return token
+}
+
 const options: StrategyOptions = {
-    jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+    jwtFromRequest: ExtractJwt.fromExtractors([
+        ExtractJwt.fromAuthHeaderAsBearerToken(),
+        cookieExtractor
+    ]),
     secretOrKey: config.JWT_SECRET,
     audience: ['user'],
     algorithms: ['HS256'],
