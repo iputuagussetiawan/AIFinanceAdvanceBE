@@ -150,12 +150,19 @@ export const loginController = asyncHandler(
 
                 // 4. Set the HttpOnly Cookie
                 // This 'bakes' the token into the browser so it's sent automatically
+                // res.cookie('accessToken', access_token, {
+                //     httpOnly: true,
+                //     secure: process.env.NODE_ENV === 'production', // HTTPS only in prod
+                //     sameSite: 'lax', // Protection against CSRF
+                //     maxAge: 24 * 60 * 60 * 1000, // 1 day expiration
+                //     path: '/'
+                // })
+
                 res.cookie('accessToken', access_token, {
                     httpOnly: true,
-                    secure: process.env.NODE_ENV === 'production', // HTTPS only in prod
-                    sameSite: 'lax', // Protection against CSRF
-                    maxAge: 24 * 60 * 60 * 1000, // 1 day expiration
-                    path: '/'
+                    secure: process.env.NODE_ENV === 'production',
+                    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+                    sameSite: 'lax'
                 })
 
                 console.log(`✅ [AUTH] User logged in: ${user.email}`)
