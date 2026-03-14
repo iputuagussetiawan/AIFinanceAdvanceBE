@@ -1,4 +1,5 @@
-// import { Router } from 'express'
-// const jobseekerRoutes = Router()
-// jobseekerRoutes.post('/register', registerJobseekerController)
-// export default jobseekerRoutes
+import { Router } from 'express'
+import { saveEducationHistoryController } from './education.controller'
+const educationRoutes = Router()
+educationRoutes.post('/create', saveEducationHistoryController)
+export default educationRoutes

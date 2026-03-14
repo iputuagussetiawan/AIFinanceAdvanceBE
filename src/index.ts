@@ -16,6 +16,7 @@ import authRoutes from './modules/auth/auth.route'
 import memberRoutes from './modules/member/member.route'
 import sessionRoutes from './modules/session/session.route'
 import cookieParser from 'cookie-parser'
+import educationRoutes from './modules/education/education.route'
 
 const app = express()
 app.use(cookieParser())
@@ -56,6 +57,7 @@ app.use(`${BASE_PATH}/user`, passportAuthenticateJWT, userRoutes)
 app.use(`${BASE_PATH}/company`, passportAuthenticateJWT, companyRoutes)
 app.use(`${BASE_PATH}/member`, passportAuthenticateJWT, memberRoutes)
 app.use(`${BASE_PATH}/session`, passportAuthenticateJWT, sessionRoutes)
+app.use(`${BASE_PATH}/education`, passportAuthenticateJWT, educationRoutes)
 app.use(errorHandler)
 
 app.listen(config.PORT, async () => {

@@ -28,8 +28,7 @@ const educationSchema = new Schema<EducationDocument>(
         },
         schoolName: {
             type: String,
-            required: [true, 'School name is required'],
-            trim: true
+            required: [true, 'School name is required']
         },
         degree: {
             type: String,
