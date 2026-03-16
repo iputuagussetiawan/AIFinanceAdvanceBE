@@ -18,6 +18,7 @@ import sessionRoutes from './modules/session/session.route'
 import cookieParser from 'cookie-parser'
 import educationRoutes from './modules/education/education.route'
 import experienceRoutes from './modules/experience/experience.route'
+import jobseekerRoutes from './modules/jobseeker/jobseeker.route'
 
 const app = express()
 app.use(cookieParser())
@@ -60,7 +61,7 @@ app.use(`${BASE_PATH}/member`, passportAuthenticateJWT, memberRoutes)
 app.use(`${BASE_PATH}/session`, passportAuthenticateJWT, sessionRoutes)
 app.use(`${BASE_PATH}/education`, passportAuthenticateJWT, educationRoutes)
 app.use(`${BASE_PATH}/experience`, passportAuthenticateJWT, experienceRoutes)
-
+app.use(`${BASE_PATH}/jobseeker`, passportAuthenticateJWT, jobseekerRoutes)
 app.use(errorHandler)
 
 app.listen(config.PORT, async () => {

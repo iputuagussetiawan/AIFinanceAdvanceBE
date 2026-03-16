@@ -1,4 +1,21 @@
 import { Router } from 'express'
-// const jobseekerRoutes = Router()
-// jobseekerRoutes.post('/register', registerJobseekerController)
-// export default jobseekerRoutes
+import {
+    saveJobseekerProfileController,
+    getJobseekerProfileController
+} from './jobseeker.controller'
+
+const jobseekerRoutes = Router()
+
+/**
+ * @route   GET /api/jobseeker/me
+ * @desc    Get current user's jobseeker profile
+ */
+jobseekerRoutes.get('/me', getJobseekerProfileController)
+
+/**
+ * @route   POST /api/jobseeker/update
+ * @desc    Create or update jobseeker profile (Upsert)
+ */
+jobseekerRoutes.post('/save', saveJobseekerProfileController)
+
+export default jobseekerRoutes
