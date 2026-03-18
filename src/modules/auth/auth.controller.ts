@@ -74,7 +74,7 @@ export const googleLoginCallback = async (req: Request, res: Response) => {
         })
 
         // 4. Redirect to the frontend (No token in the URL!)
-        return res.redirect(`${config.FRONTEND_ORIGIN}/dashboard?status=success&provider=google`)
+        return res.redirect(`${config.FRONTEND_ORIGIN}/onboarding?status=success&provider=google`)
     } catch (error: any) {
         console.error('❌[AUTH] Callback Error:', error)
         const errorType = error.name === 'NotFoundException' ? 'user_not_found' : 'server_error'
