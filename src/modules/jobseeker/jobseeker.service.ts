@@ -3,6 +3,9 @@ import { NotFoundException, BadRequestException } from '../../utils/appError'
 import UserModel from '../user/user.model'
 import JobseekerModel from './jobseeker.model' // Assuming your profile model name
 import type { JobseekerPersonalInfoDTO } from './jobseeker.validation' // Assuming you have this schema
+import RoleModel from '../role/roles-permission.model'
+import { Roles } from '../role/role.enum'
+import MemberModel from '../member/member.model'
 
 /**
  * Service to handle creating or updating the core Jobseeker profile
@@ -38,6 +41,24 @@ export const saveJobseekerProfileService = async (
                 session
             }
         )
+
+        //check owner role
+        const jobseekerRole = await RoleModel.findOne({
+            name: Roles.JOBSEEKER
+        }).session(session)
+
+        //jika owner role tidak ditemukan, maka tampilkan error
+        if (!jobseekerRole) {
+            throw new NotFoundException('Jobseeker role not found')
+        }
+
+        //buat member baru dengan role jobseeker
+        const member = new MemberModel({
+            userId: userId,
+            role: jobseekerRole._id,
+            joinedAt: new Date()
+        })
+        await member.save({ session })
 
         await session.commitTransaction()
 
