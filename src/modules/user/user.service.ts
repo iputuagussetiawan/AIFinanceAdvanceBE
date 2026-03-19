@@ -35,6 +35,20 @@ export const updateUserService = async (
     const user = await UserModel.findById(userId)
     if (!user) throw new NotFoundException('User not found')
 
+    // 1. Find the Member record associated with this User ID
+    // 2. Populate 'userId' but exclude the password
+    // 3. Populate 'role' to get permissions/details
+    const member = await MemberModel.findOne({ userId })
+        .populate({
+            path: 'userId',
+            select: '-password'
+        })
+        .populate('role')
+
+    if (!member) {
+        throw new BadRequestException('User or Member record not found')
+    }
+
     if (profilePic) {
         if (user.profilePicture && user.profilePicture.includes('cloudinary')) {
             try {
@@ -59,5 +73,9 @@ export const updateUserService = async (
     user.name = body.name || user.name
     user.bio = body.bio || user.bio
     await user.save()
-    return user.omitPassword()
+    return {
+        user: member.userId,
+        role: member.role,
+        joinedAt: member.joinedAt
+    }
 }

@@ -19,9 +19,11 @@ export const updateUserController = asyncHandler(async (req: Request, res: Respo
     const body = updateUserSchema.parse(req.body)
     const userId = req.user?._id
     const profilePic = req.file
-    const user = await updateUserService(userId, body, profilePic)
+    const { user, role, joinedAt } = await updateUserService(userId, body, profilePic)
     return res.status(HTTPSTATUS.OK).json({
         message: 'User profile updated successfully',
-        data: user
+        user,
+        role,
+        joinedAt
     })
 })
