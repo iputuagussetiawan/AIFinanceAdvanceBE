@@ -53,12 +53,19 @@ export const saveJobseekerProfileService = async (
         }
 
         //buat member baru dengan role jobseeker
-        const member = new MemberModel({
-            userId: userId,
-            role: jobseekerRole._id,
-            joinedAt: new Date()
-        })
-        await member.save({ session })
+        // We find the member by userId and update their role
+        await MemberModel.findOneAndUpdate(
+            { userId: userId },
+            {
+                role: jobseekerRole._id
+                // Optional: you might want to update joinedAt or an "onboardedAt" field here
+            },
+            {
+                session,
+                new: true,
+                upsert: true // In case the member record was somehow missing
+            }
+        )
 
         await session.commitTransaction()
 

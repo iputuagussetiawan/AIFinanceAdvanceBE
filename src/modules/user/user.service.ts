@@ -3,6 +3,12 @@ import MemberModel from '../member/member.model'
 import UserModel from './user.model'
 import type { UpdateUserInputType } from './user.validation'
 import { v2 as cloudinary } from 'cloudinary'
+import VerificationCodeModel from './verification.model'
+import { VerificationEnum } from '../../enums/verification-code.enum'
+import { fortyFiveMinutesFromNow } from '../../utils/date-time'
+import { sendEmail } from '../../mailers/mailer'
+import { verifyEmailTemplate } from '../../mailers/templates/template'
+import { config } from '../../config/app.config'
 
 export const getCurrentUserService = async (userId: string) => {
     // 1. Find the Member record associated with this User ID
@@ -49,6 +55,28 @@ export const updateUserService = async (
         throw new BadRequestException('User or Member record not found')
     }
 
+    if (body.email && body.email !== user.email) {
+        // Optional: Check if the new email is already taken by another user
+        const existingEmail = await UserModel.findOne({ email: body.email })
+        if (existingEmail) throw new BadRequestException('Email already in use')
+
+        user.email = body.email
+        user.isEmailVerified = false // Reset verification status
+
+        // Trigger your verification function here
+        const verification = await VerificationCodeModel.create({
+            userId: user._id,
+            type: VerificationEnum.EMAIL_VERIFICATION,
+            expiresAt: fortyFiveMinutesFromNow()
+        })
+
+        const verificationUrl = `${config.FRONTEND_ORIGIN}/confirm-account?code=${verification.code}`
+        await sendEmail({
+            to: user.email,
+            ...verifyEmailTemplate(verificationUrl)
+        })
+    }
+
     if (profilePic) {
         if (user.profilePicture && user.profilePicture.includes('cloudinary')) {
             try {
@@ -72,6 +100,11 @@ export const updateUserService = async (
 
     user.name = body.name || user.name
     user.bio = body.bio || user.bio
+
+    if (body.password) {
+        user.password = body.password // Ensure this is hashed via middleware
+    }
+
     await user.save()
     return {
         user: member.userId,
