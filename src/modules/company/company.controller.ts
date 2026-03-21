@@ -9,8 +9,8 @@ import {
 import {
     changeMemberRoleService,
     createCompanyService,
-    deleteCompanyService,
-    getAllCompanyUserIsMemberService,
+    // deleteCompanyService,
+    // getAllCompanyUserIsMemberService,
     getCompanyByIdService,
     getCompanyMembersService,
     updateCompanyByIdService
@@ -20,16 +20,16 @@ import { getMemberRoleInCompany } from '../member/member.service'
 import { roleGuard } from '../role/role-guard.util'
 import { Permissions } from '../role/role.enum'
 
-export const getAllCompaniesUserIsMemberController = asyncHandler(
-    async (req: Request, res: Response) => {
-        const userId = req.user?._id
-        const { companies } = await getAllCompanyUserIsMemberService(userId)
-        return res.status(HTTPSTATUS.OK).json({
-            message: 'User companies fetched successfully',
-            companies
-        })
-    }
-)
+// export const getAllCompaniesUserIsMemberController = asyncHandler(
+//     async (req: Request, res: Response) => {
+//         const userId = req.user?._id
+//         const { companies } = await getAllCompanyUserIsMemberService(userId)
+//         return res.status(HTTPSTATUS.OK).json({
+//             message: 'User companies fetched successfully',
+//             companies
+//         })
+//     }
+// )
 
 export const createCompanyController = asyncHandler(async (req: Request, res: Response) => {
     const body = createCompanySchema.parse(req.body)
@@ -75,17 +75,17 @@ export const getCompanyByIdController = asyncHandler(async (req: Request, res: R
     })
 })
 
-export const deleteCompanyByIdController = asyncHandler(async (req: Request, res: Response) => {
-    const companyId = companyIdSchema.parse(req.params.id)
-    const userId = req.user?._id
-    const { role } = await getMemberRoleInCompany(userId, companyId)
-    roleGuard(role, [Permissions.DELETE_COMPANY])
-    const { currentCompany } = await deleteCompanyService(companyId, userId)
-    return res.status(HTTPSTATUS.OK).json({
-        message: 'Company deleted successfully',
-        currentCompany
-    })
-})
+// export const deleteCompanyByIdController = asyncHandler(async (req: Request, res: Response) => {
+//     const companyId = companyIdSchema.parse(req.params.id)
+//     const userId = req.user?._id
+//     const { role } = await getMemberRoleInCompany(userId, companyId)
+//     roleGuard(role, [Permissions.DELETE_COMPANY])
+//     const { currentCompany } = await deleteCompanyService(companyId, userId)
+//     return res.status(HTTPSTATUS.OK).json({
+//         message: 'Company deleted successfully',
+//         currentCompany
+//     })
+// })
 
 export const changeCompanyMemberRoleController = asyncHandler(
     async (req: Request, res: Response) => {

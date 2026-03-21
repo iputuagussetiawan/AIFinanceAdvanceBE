@@ -19,6 +19,9 @@ import { passwordResetTemplate, verifyEmailTemplate } from '../../mailers/templa
 import { HTTPSTATUS } from '../../config/http.config'
 import type { ResetPasswordDto } from './auth.validation'
 import { hashValue } from '../../utils/bcrypt'
+import MemberModel from '../member/member.model'
+import RoleModel from '../role/roles-permission.model'
+import { Roles } from '../role/role.enum'
 
 export const loginOrCreateAccountService = async (data: {
     provider: string
@@ -110,6 +113,21 @@ export const registerUserService = async (body: {
         })
         // 6. Save the account document as part of the transaction
         await account.save({ session })
+
+        const guestRole = await RoleModel.findOne({
+            name: Roles.GUEST
+        }).session(session)
+
+        if (!guestRole) {
+            throw new NotFoundException('Guest role not found')
+        }
+
+        const member = new MemberModel({
+            userId: user._id,
+            role: guestRole._id,
+            joinedAt: new Date()
+        })
+        await member.save({ session })
 
         const verification = await VerificationCodeModel.create({
             userId: user._id,

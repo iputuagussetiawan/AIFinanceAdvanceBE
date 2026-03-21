@@ -3,7 +3,6 @@ import { RoleDocument } from '../role/roles-permission.model'
 
 export interface MemberDocument extends Document {
     userId: mongoose.Types.ObjectId
-    companyId: mongoose.Types.ObjectId
     role: RoleDocument
     joinedAt: Date
 }
@@ -13,11 +12,6 @@ const memberSchema = new Schema<MemberDocument>(
         userId: {
             type: Schema.Types.ObjectId,
             ref: 'User',
-            required: true
-        },
-        companyId: {
-            type: Schema.Types.ObjectId,
-            ref: 'Company',
             required: true
         },
         role: {

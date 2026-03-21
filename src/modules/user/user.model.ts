@@ -10,7 +10,8 @@ export interface UserDocument extends Document {
     isEmailVerified: boolean
     isActive: boolean
     lastLogin: Date | null
-    currentCompany: mongoose.Types.ObjectId | null
+    currentCompany?: mongoose.Types.ObjectId | null
+    onboardingComplete: boolean
     createdAt: Date
     updatedAt: Date
     comparePassword(value: string): Promise<boolean>
@@ -49,7 +50,9 @@ const userSchema = new Schema<UserDocument>(
             default: false
         },
         isActive: { type: Boolean, default: true },
-        lastLogin: { type: Date, default: null }
+        lastLogin: { type: Date, default: null },
+        // --- System Metadata ---
+        onboardingComplete: { type: Boolean, default: false }
     },
     {
         timestamps: true

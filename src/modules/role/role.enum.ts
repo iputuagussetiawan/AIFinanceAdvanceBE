@@ -17,6 +17,8 @@ export const Roles = {
     // Standard employee: Can only view their own data or submit expense requests
     MEMBER: 'MEMBER',
 
+    JOBSEEKER: 'JOBSEEKER',
+
     // External viewer (e.g., a bank or investor) with limited read-only permissions
     GUEST: 'GUEST'
 } as const
@@ -24,6 +26,11 @@ export const Roles = {
 export type RoleType = keyof typeof Roles
 
 export const Permissions = {
+    CREATE_CV: 'CREATE_CV',
+    DELETE_CV: 'DELETE_CV',
+    EDIT_CV: 'EDIT_CV',
+    MANAGE_CV: 'MANAGE_CV',
+
     CREATE_COMPANY: 'CREATE_COMPANY',
     DELETE_COMPANY: 'DELETE_COMPANY',
     EDIT_COMPANY: 'EDIT_COMPANY',

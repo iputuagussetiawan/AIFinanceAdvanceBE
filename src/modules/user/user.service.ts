@@ -1,17 +1,35 @@
 import { BadRequestException, NotFoundException } from '../../utils/appError'
+import MemberModel from '../member/member.model'
 import UserModel from './user.model'
 import type { UpdateUserInputType } from './user.validation'
 import { v2 as cloudinary } from 'cloudinary'
+import VerificationCodeModel from './verification.model'
+import { VerificationEnum } from '../../enums/verification-code.enum'
+import { fortyFiveMinutesFromNow } from '../../utils/date-time'
+import { sendEmail } from '../../mailers/mailer'
+import { verifyEmailTemplate } from '../../mailers/templates/template'
+import { config } from '../../config/app.config'
 
 export const getCurrentUserService = async (userId: string) => {
-    const user = await UserModel.findById(userId)
-        //It tells the database: "Fetch everything for this user, except for the password field."
-        .select('-password')
-    if (!user) {
-        throw new BadRequestException('User not found')
+    // 1. Find the Member record associated with this User ID
+    // 2. Populate 'userId' but exclude the password
+    // 3. Populate 'role' to get permissions/details
+    const member = await MemberModel.findOne({ userId })
+        .populate({
+            path: 'userId',
+            select: '-password'
+        })
+        .populate('role')
+
+    if (!member) {
+        throw new BadRequestException('User or Member record not found')
     }
+
+    // Return a combined object that is easy for the frontend to use
     return {
-        user
+        user: member.userId,
+        role: member.role,
+        joinedAt: member.joinedAt
     }
 }
 
@@ -22,6 +40,42 @@ export const updateUserService = async (
 ) => {
     const user = await UserModel.findById(userId)
     if (!user) throw new NotFoundException('User not found')
+
+    // 1. Find the Member record associated with this User ID
+    // 2. Populate 'userId' but exclude the password
+    // 3. Populate 'role' to get permissions/details
+    const member = await MemberModel.findOne({ userId })
+        .populate({
+            path: 'userId',
+            select: '-password'
+        })
+        .populate('role')
+
+    if (!member) {
+        throw new BadRequestException('User or Member record not found')
+    }
+
+    if (body.email && body.email !== user.email) {
+        // Optional: Check if the new email is already taken by another user
+        const existingEmail = await UserModel.findOne({ email: body.email })
+        if (existingEmail) throw new BadRequestException('Email already in use')
+
+        user.email = body.email
+        user.isEmailVerified = false // Reset verification status
+
+        // Trigger your verification function here
+        const verification = await VerificationCodeModel.create({
+            userId: user._id,
+            type: VerificationEnum.EMAIL_VERIFICATION,
+            expiresAt: fortyFiveMinutesFromNow()
+        })
+
+        const verificationUrl = `${config.FRONTEND_ORIGIN}/confirm-account?code=${verification.code}`
+        await sendEmail({
+            to: user.email,
+            ...verifyEmailTemplate(verificationUrl)
+        })
+    }
 
     if (profilePic) {
         if (user.profilePicture && user.profilePicture.includes('cloudinary')) {
@@ -46,6 +100,15 @@ export const updateUserService = async (
 
     user.name = body.name || user.name
     user.bio = body.bio || user.bio
+
+    if (body.password) {
+        user.password = body.password // Ensure this is hashed via middleware
+    }
+
     await user.save()
-    return user.omitPassword()
+    return {
+        user: member.userId,
+        role: member.role,
+        joinedAt: member.joinedAt
+    }
 }

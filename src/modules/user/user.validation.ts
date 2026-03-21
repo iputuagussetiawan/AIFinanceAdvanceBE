@@ -10,7 +10,12 @@ export const userObject = z.object({
         .max(260, 'Bio must be less than 160 characters') // Standard Twitter-length limit
         .trim()
         .optional()
-        .or(z.literal('')) // Allows empty string in addition to undefined
+        .or(z.literal('')), // Allows empty string in addition to undefined
+    email: z.string().email('Invalid email address').trim().toLowerCase(),
+    password: z
+        .string()
+        .min(8, 'Password must be at least 8 characters')
+        .max(100, 'Password is too long')
 })
 
 // For updates, we use .partial() so you don't have to send every field

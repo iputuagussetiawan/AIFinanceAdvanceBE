@@ -66,5 +66,11 @@ export const RolePermissions: Record<RoleType, Array<PermissionType>> = {
     ],
     AUDITOR: [Permissions.VIEW_ONLY],
     MEMBER: [Permissions.VIEW_ONLY],
+    JOBSEEKER: [
+        Permissions.CREATE_CV,
+        Permissions.DELETE_CV,
+        Permissions.EDIT_CV,
+        Permissions.MANAGE_CV
+    ],
     GUEST: [Permissions.VIEW_ONLY]
 }

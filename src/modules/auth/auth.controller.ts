@@ -74,7 +74,7 @@ export const googleLoginCallback = async (req: Request, res: Response) => {
         })
 
         // 4. Redirect to the frontend (No token in the URL!)
-        return res.redirect(`${config.FRONTEND_ORIGIN}/dashboard?status=success&provider=google`)
+        return res.redirect(`${config.FRONTEND_ORIGIN}/onboarding?status=success&provider=google`)
     } catch (error: any) {
         console.error('❌[AUTH] Callback Error:', error)
         const errorType = error.name === 'NotFoundException' ? 'user_not_found' : 'server_error'
@@ -150,12 +150,19 @@ export const loginController = asyncHandler(
 
                 // 4. Set the HttpOnly Cookie
                 // This 'bakes' the token into the browser so it's sent automatically
+                // res.cookie('accessToken', access_token, {
+                //     httpOnly: true,
+                //     secure: process.env.NODE_ENV === 'production', // HTTPS only in prod
+                //     sameSite: 'lax', // Protection against CSRF
+                //     maxAge: 24 * 60 * 60 * 1000, // 1 day expiration
+                //     path: '/'
+                // })
+
                 res.cookie('accessToken', access_token, {
                     httpOnly: true,
-                    secure: process.env.NODE_ENV === 'production', // HTTPS only in prod
-                    sameSite: 'lax', // Protection against CSRF
-                    maxAge: 24 * 60 * 60 * 1000, // 1 day expiration
-                    path: '/'
+                    secure: process.env.NODE_ENV === 'production',
+                    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+                    sameSite: 'lax'
                 })
 
                 console.log(`✅ [AUTH] User logged in: ${user.email}`)
