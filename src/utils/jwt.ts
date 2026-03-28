@@ -1,4 +1,4 @@
-import jwt, { SignOptions } from 'jsonwebtoken'
+import jwt, { SignOptions, type VerifyOptions } from 'jsonwebtoken'
 
 import { config } from '../config/app.config'
 import type { UserDocument } from '../modules/user/user.model'

@@ -1,7 +1,7 @@
 import mongoose from 'mongoose'
 import { NotFoundException } from '../../utils/appError'
 import UserModel from '../user/user.model'
-import ExperienceModel from './experience.model' // Ensure this is imported
+import ExperienceModel, { type ExperienceDocument } from './experience.model' // Ensure this is imported
 import type { ExperienceDTO } from './experience.validation'
 
 /**
@@ -48,5 +48,28 @@ export const saveExperienceHistoryService = async (userId: string, body: Experie
     } finally {
         // Always end the session
         session.endSession()
+    }
+}
+
+export const getExperienceHistory = async (userId: string): Promise<ExperienceDocument[]> => {
+    try {
+        // 1. Validation
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            throw new Error('Invalid User ID format')
+        }
+
+        // 2. Fetch Data
+        const experiences = await ExperienceModel.find({ userId })
+            .sort({
+                isCurrent: -1, // Shows "Present" jobs at the very top
+                orderPosition: 1, // Follows custom drag-and-drop order
+                startDate: -1 // Finally, sorts by newest start date
+            })
+            .populate('companyId', 'name logo website') // Optional: if you want linked company data
+            .lean()
+
+        return experiences as unknown as ExperienceDocument[]
+    } catch (error: any) {
+        throw new Error(`Service Error: ${error.message}`)
     }
 }

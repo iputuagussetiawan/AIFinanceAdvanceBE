@@ -2,7 +2,7 @@ import mongoose from 'mongoose'
 import { NotFoundException } from '../../utils/appError'
 import type { EducationDTO } from './education.validation'
 import UserModel from '../user/user.model'
-import EducationModel from './education.model'
+import EducationModel, { type EducationDocument } from './education.model'
 
 /**
  * Service to handle saving a single education record
@@ -45,5 +45,24 @@ export const saveEducationHistoryService = async (
         throw error
     } finally {
         session.endSession()
+    }
+}
+
+export const getEducationHistory = async (userId: string): Promise<EducationDocument[]> => {
+    try {
+        // 1. Validate the userId format
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            throw new Error('Invalid User ID format')
+        }
+
+        // 2. Fetch the data
+        // We sort by orderPosition (ascending) then by startDate (descending)
+        const history = await EducationModel.find({ userId })
+            .sort({ orderPosition: 1, startDate: -1 })
+            .lean() // .lean() makes the query faster by returning plain JS objects
+
+        return history as unknown as EducationDocument[]
+    } catch (error: any) {
+        throw new Error(`Error fetching education history: ${error.message}`)
     }
 }

@@ -3,7 +3,13 @@ import { compareValue, hashValue } from '../../utils/bcrypt'
 
 export interface UserDocument extends Document {
     name: string
+    firstName: string // New: Added from image
+    lastName: string
     email: string
+    jobTitle?: string // New: Added from image (e.g. "Graphic Designer")
+    phoneNumber?: string // New: Added from image
+    address?: string // New: Added from image
+    website?: string
     bio?: string
     password?: string
     profilePicture: string | null
@@ -20,10 +26,22 @@ export interface UserDocument extends Document {
 
 const userSchema = new Schema<UserDocument>(
     {
-        name: {
+        firstName: {
             type: String,
-            required: false,
-            trim: true
+            required: [true, 'First name is required'],
+            trim: true,
+            uppercase: true // To match the styling in your image
+        },
+        lastName: {
+            type: String,
+            required: [true, 'Last name is required'],
+            trim: true,
+            uppercase: true // To match the styling in your image
+        },
+        jobTitle: {
+            type: String,
+            trim: true,
+            default: '' // e.g., "GRAPHIC DESIGNER"
         },
         email: {
             type: String,
@@ -31,6 +49,21 @@ const userSchema = new Schema<UserDocument>(
             unique: true,
             trim: true,
             lowercase: true
+        },
+        phoneNumber: {
+            type: String,
+            trim: true,
+            default: ''
+        },
+        address: {
+            type: String,
+            trim: true,
+            default: ''
+        },
+        website: {
+            type: String,
+            trim: true,
+            default: ''
         },
         bio: {
             type: String,
@@ -51,13 +84,18 @@ const userSchema = new Schema<UserDocument>(
         },
         isActive: { type: Boolean, default: true },
         lastLogin: { type: Date, default: null },
-        // --- System Metadata ---
         onboardingComplete: { type: Boolean, default: false }
     },
     {
-        timestamps: true
+        timestamps: true,
+        toJSON: { virtuals: true }, // Required to send fullName to frontend
+        toObject: { virtuals: true }
     }
 )
+
+userSchema.virtual('fullName').get(function () {
+    return `${this.firstName} ${this.lastName}`
+})
 
 //This code is a Mongoose Middleware (specifically a "Pre-Save Hook"). Its primary purpose is to automatically hash the user's password before it ever touches your database, ensuring that you never store plain-text passwords.
 userSchema.pre('save', async function (next) {

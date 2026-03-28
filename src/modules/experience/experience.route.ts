@@ -1,5 +1,8 @@
 import { Router } from 'express'
-import { saveExperienceHistoryController } from './experience.controller'
+import {
+    getExperienceHistoryController,
+    saveExperienceHistoryController
+} from './experience.controller'
 
 const experienceRoutes = Router()
 
@@ -9,5 +12,6 @@ const experienceRoutes = Router()
  * @access  Private
  */
 experienceRoutes.post('/create', saveExperienceHistoryController)
+experienceRoutes.get('/get', getExperienceHistoryController)
 
 export default experienceRoutes

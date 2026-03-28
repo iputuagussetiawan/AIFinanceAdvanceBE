@@ -1,6 +1,11 @@
 import { Request, Response } from 'express'
 import { asyncHandler } from '../../middlewares/asyncHandler.middleware'
-import { getCurrentUserService, updateUserService } from './user.service'
+import {
+    getCurrentUserService,
+    updateUserPhotoProfileService,
+    updateUserProfileService,
+    updateUserService
+} from './user.service'
 import { HTTPSTATUS } from '../../config/http.config'
 import { updateUserSchema } from './user.validation'
 
@@ -27,3 +32,29 @@ export const updateUserController = asyncHandler(async (req: Request, res: Respo
         joinedAt
     })
 })
+
+export const updateUserProfileController = asyncHandler(async (req: Request, res: Response) => {
+    const body = updateUserSchema.parse(req.body)
+    const userId = req.user?._id
+    const { user, role, joinedAt } = await updateUserProfileService(userId, body)
+    return res.status(HTTPSTATUS.OK).json({
+        message: 'User profile updated successfully',
+        user,
+        role,
+        joinedAt
+    })
+})
+
+export const updateUserPhotoProfileController = asyncHandler(
+    async (req: Request, res: Response) => {
+        const userId = req.user?._id
+        const profilePic = req.file
+        const { user, role, joinedAt } = await updateUserPhotoProfileService(userId, profilePic)
+        return res.status(HTTPSTATUS.OK).json({
+            message: 'User profile updated successfully',
+            user,
+            role,
+            joinedAt
+        })
+    }
+)

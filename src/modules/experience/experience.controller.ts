@@ -2,7 +2,7 @@ import type { Request, Response } from 'express'
 import { asyncHandler } from '../../middlewares/asyncHandler.middleware'
 import { HTTPSTATUS } from '../../config/http.config'
 import { experienceValidation } from './experience.validation'
-import { saveExperienceHistoryService } from './experience.service'
+import { getExperienceHistory, saveExperienceHistoryService } from './experience.service'
 import { BadRequestException } from '../../utils/appError'
 
 export const saveExperienceHistoryController = asyncHandler(async (req: Request, res: Response) => {
@@ -23,5 +23,17 @@ export const saveExperienceHistoryController = asyncHandler(async (req: Request,
     return res.status(HTTPSTATUS.CREATED).json({
         message: 'Experience record created successfully',
         experience
+    })
+})
+
+export const getExperienceHistoryController = asyncHandler(async (req: Request, res: Response) => {
+    const currentUserId = req.user?._id
+    // 3. Call Service
+    const experiences = await getExperienceHistory(currentUserId)
+    // 4. Response
+    return res.status(HTTPSTATUS.OK).json({
+        message: 'Experience history retrieved successfully',
+        count: experiences.length,
+        data: experiences
     })
 })

@@ -2,7 +2,7 @@ import type { Request, Response } from 'express'
 import { asyncHandler } from '../../middlewares/asyncHandler.middleware'
 import { HTTPSTATUS } from '../../config/http.config'
 import { educationValidation } from './education.validation'
-import { saveEducationHistoryService } from './education.service'
+import { getEducationHistory, saveEducationHistoryService } from './education.service'
 import { BadRequestException } from '../../utils/appError'
 
 export const saveEducationHistoryController = asyncHandler(async (req: Request, res: Response) => {
@@ -23,5 +23,18 @@ export const saveEducationHistoryController = asyncHandler(async (req: Request, 
     return res.status(HTTPSTATUS.CREATED).json({
         message: 'Education record created successfully',
         education
+    })
+})
+
+export const getEducationHistoryController = asyncHandler(async (req: Request, res: Response) => {
+    // 2. Authorization Check (Current logged-in user)
+    const currentUserId = req.user?._id
+    // 4. Call the Service or Model directly
+    const educationHistory = await getEducationHistory(currentUserId)
+    // 5. Return Response
+    return res.status(HTTPSTATUS.OK).json({
+        message: 'Education history retrieved successfully',
+        count: educationHistory.length,
+        data: educationHistory
     })
 })

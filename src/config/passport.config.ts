@@ -12,6 +12,7 @@ import {
     verifyUserByIdService,
     verifyUserService
 } from '../modules/auth/auth.service'
+import SessionModel from '../modules/session/session.model'
 
 interface JwtPayload {
     userId: string
@@ -95,6 +96,15 @@ passport.use(
             const user = await verifyUserByIdService(payload.userId)
             if (!user) {
                 return done(null, false)
+            }
+
+            // 2. NEW: Verify the session still exists in the database
+            // If you deleted the session via deleteSessionService, this will be null
+            const activeSession = await SessionModel.findById(payload.sessionId)
+
+            if (!activeSession) {
+                // This triggers if the session was revoked/deleted
+                return done(null, false, { message: 'Session has been revoked' })
             }
             req.sessionId = payload.sessionId
             return done(null, user)
