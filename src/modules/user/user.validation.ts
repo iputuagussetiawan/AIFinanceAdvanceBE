@@ -21,7 +21,7 @@ export const userObject = z.object({
         .or(z.literal('')),
     bio: z
         .string()
-        .max(260, 'Bio must be less than 160 characters') // Standard Twitter-length limit
+        .max(600, 'Bio must be less than 600 characters')
         .trim()
         .optional()
         .or(z.literal('')), // Allows empty string in addition to undefined

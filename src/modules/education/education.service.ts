@@ -48,6 +48,49 @@ export const saveEducationHistoryService = async (
     }
 }
 
+export const updateEducationHistoryService = async (
+    userId: string,
+    educations: EducationDTO[] // Expecting the array from your form
+) => {
+    // 1. Verify user exists
+    const user = await UserModel.findById(userId)
+    if (!user) {
+        throw new NotFoundException('User not found')
+    }
+
+    const session = await mongoose.startSession()
+
+    try {
+        session.startTransaction()
+
+        // 2. Delete existing education records for this user to perform a clean sync
+        // This is easier than trying to track which ones were edited vs deleted vs added
+        await EducationModel.deleteMany({ userId }, { session })
+
+        // 3. Prepare the new documents with the userId
+        const educationDocs = educations.map((edu) => ({
+            ...edu,
+            userId: userId
+        }))
+
+        // 4. Bulk Insert
+        const savedEducations = await EducationModel.insertMany(educationDocs, { session })
+
+        await session.commitTransaction()
+
+        return {
+            data: savedEducations,
+            count: savedEducations.length
+        }
+    } catch (error: any) {
+        await session.abortTransaction()
+        console.error('❌ [TRANSACTION] Bulk Education update aborted:', error.message)
+        throw error
+    } finally {
+        session.endSession()
+    }
+}
+
 export const getEducationHistory = async (userId: string): Promise<EducationDocument[]> => {
     try {
         // 1. Validate the userId format
