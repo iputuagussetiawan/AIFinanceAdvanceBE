@@ -13,6 +13,7 @@ export const ErrorCodeEnum = {
     RESOURCE_NOT_FOUND: 'RESOURCE_NOT_FOUND',
     // System Errors
     INTERNAL_SERVER_ERROR: 'INTERNAL_SERVER_ERROR',
-    FILE_UPLOAD_ERROR: 'FILE_UPLOAD_ERROR'
+    FILE_UPLOAD_ERROR: 'FILE_UPLOAD_ERROR',
+    RESOURCE_ALREADY_EXISTS: 'RESOURCE_ALREADY_EXISTS'
 } as const
 export type ErrorCodeEnumType = keyof typeof ErrorCodeEnum
