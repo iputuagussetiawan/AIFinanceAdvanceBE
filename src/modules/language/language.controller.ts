@@ -6,9 +6,12 @@ import {
     createLanguageService,
     updateLanguageService,
     getLanguagesService,
-    deleteLanguageService
+    deleteLanguageService,
+    bulkCreateLanguageService,
+    getLanguageByIdService
 } from './language.service'
 import { BadRequestException } from '../../utils/appError'
+import z from 'zod'
 
 /**
  * Create a new master language
@@ -24,6 +27,18 @@ export const createLanguageController = asyncHandler(async (req: Request, res: R
     return res.status(HTTPSTATUS.CREATED).json({
         message: 'Language created successfully',
         data: language
+    })
+})
+
+export const bulkCreateLanguageController = asyncHandler(async (req: Request, res: Response) => {
+    // Validate that req.body is an array of languages
+    const validatedData = z.array(languageValidation).parse(req.body)
+
+    const result = await bulkCreateLanguageService(validatedData)
+
+    return res.status(HTTPSTATUS.CREATED).json({
+        message: 'Languages bulk inserted successfully',
+        ...result
     })
 })
 
@@ -61,6 +76,24 @@ export const getLanguagesController = asyncHandler(async (req: Request, res: Res
         message: 'Languages retrieved successfully',
         count: languages.length,
         data: languages
+    })
+})
+
+/**
+ * Get a single language by its ID
+ */
+export const getLanguageByIdController = asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.params as { id: string }
+
+    if (!id) {
+        throw new BadRequestException('Language ID is required')
+    }
+
+    const language = await getLanguageByIdService(id)
+
+    return res.status(HTTPSTATUS.OK).json({
+        message: 'Language retrieved successfully',
+        data: language
     })
 })
 

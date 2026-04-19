@@ -1,5 +1,5 @@
 import mongoose from 'mongoose'
-import { NotFoundException, ConflictException } from '../../utils/appError'
+import { NotFoundException, ConflictException, BadRequestException } from '../../utils/appError'
 import type { LanguageDTO } from './language.validation'
 import LanguageModel, { type LanguageDocument } from './language.model'
 
@@ -19,6 +19,48 @@ export const createLanguageService = async (body: LanguageDTO) => {
     } catch (error: any) {
         await session.abortTransaction()
         console.error('❌ [TRANSACTION] Language creation failed:', error.message)
+        throw error
+    } finally {
+        session.endSession()
+    }
+}
+
+/**
+ * Service to bulk insert multiple master languages
+ * Useful for initial setup or migrations
+ */
+export const bulkCreateLanguageService = async (languages: LanguageDTO[]) => {
+    const session = await mongoose.startSession()
+
+    try {
+        session.startTransaction()
+
+        // 1. Extract names to check for duplicates in the database
+        const names = languages.map((lang) => lang.name)
+
+        // 2. Check if any of these languages already exist
+        const existingLanguages = await LanguageModel.find({
+            name: { $in: names.map((n) => new RegExp(`^${n}$`, 'i')) }
+        }).session(session)
+
+        if (existingLanguages.length > 0) {
+            const existingNames = existingLanguages.map((l) => l.name).join(', ')
+            throw new ConflictException(`Some languages already exist: ${existingNames}`)
+        }
+
+        // 3. Bulk Insert
+        // insertMany is more efficient than looping .save()
+        const savedLanguages = await LanguageModel.insertMany(languages, { session })
+
+        await session.commitTransaction()
+
+        return {
+            data: savedLanguages,
+            count: savedLanguages.length
+        }
+    } catch (error: any) {
+        await session.abortTransaction()
+        console.error('❌ [TRANSACTION] Bulk language insert aborted:', error.message)
         throw error
     } finally {
         session.endSession()
@@ -68,6 +110,26 @@ export const getLanguagesService = async (activeOnly = false): Promise<LanguageD
     return (await LanguageModel.find(query)
         .sort({ orderPosition: 1, name: 1 })
         .lean()) as unknown as LanguageDocument[]
+}
+
+/**
+ * Fetch a single language by its ID
+ */
+export const getLanguageByIdService = async (id: string): Promise<LanguageDocument> => {
+    // 1. Validasi format ID MongoDB agar tidak menyebabkan crash
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        throw new BadRequestException('Invalid Language ID format')
+    }
+
+    // 2. Cari data berdasarkan ID
+    const language = await LanguageModel.findById(id).lean()
+
+    // 3. Jika tidak ditemukan, lempar NotFoundException
+    if (!language) {
+        throw new NotFoundException('Language record not found')
+    }
+
+    return language as unknown as LanguageDocument
 }
 
 /**
