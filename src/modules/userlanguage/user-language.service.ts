@@ -31,5 +31,17 @@ export const syncUserLanguagesService = async (userId: string, languages: UserLa
 }
 
 export const getUserLanguagesService = async (userId: string) => {
-    return await UserLanguageModel.find({ userId }).populate('languageId', 'name logo').lean()
+    const results = await UserLanguageModel.find({ userId })
+        .select('-userId -__v -createdAt -updatedAt') // Hanya ambil field yang diperlukan
+        .populate('languageId', 'name')
+        .lean()
+
+    // Mapping: Ubah languageId menjadi language
+    return results.map((item: any) => {
+        const { languageId, ...rest } = item
+        return {
+            ...rest,
+            language: languageId // Rename key di sini
+        }
+    })
 }
