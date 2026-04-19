@@ -32,4 +32,8 @@ export const educationValidation = z
         path: ['endDate']
     })
 
+export const updateEducationListValidation = z.object({
+    educations: z.array(educationValidation)
+})
 export type EducationDTO = z.infer<typeof educationValidation>
+export type UpdateEducationListDTO = z.infer<typeof updateEducationListValidation>
