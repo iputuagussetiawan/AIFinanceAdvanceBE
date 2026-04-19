@@ -104,12 +104,37 @@ export const updateLanguageService = async (id: string, body: Partial<LanguageDT
  * Fetch languages for the application
  * @param activeOnly - If true, only returns languages where isActive is true
  */
-export const getLanguagesService = async (activeOnly = false): Promise<LanguageDocument[]> => {
-    const query = activeOnly ? { isActive: true } : {}
+/**
+ * Fetch all languages with pagination and metadata
+ */
+export const getLanguagesService = async (query: {
+    activeOnly?: boolean
+    page?: number
+    limit?: number
+}) => {
+    const { activeOnly = false, page = 1, limit = 10 } = query
 
-    return (await LanguageModel.find(query)
-        .sort({ orderPosition: 1, name: 1 })
-        .lean()) as unknown as LanguageDocument[]
+    // Menghitung jumlah data yang dilewati
+    const skip = (page - 1) * limit
+
+    const filter = activeOnly ? { isActive: true } : {}
+
+    // Menjalankan count dan find secara paralel untuk performa lebih cepat
+    const [languages, total] = await Promise.all([
+        LanguageModel.find(filter)
+            .sort({ orderPosition: 1, name: 1 })
+            .skip(skip)
+            .limit(limit)
+            .lean(),
+        LanguageModel.countDocuments(filter)
+    ])
+
+    return {
+        languages: languages as unknown as LanguageDocument[],
+        total,
+        page,
+        limit
+    }
 }
 
 /**

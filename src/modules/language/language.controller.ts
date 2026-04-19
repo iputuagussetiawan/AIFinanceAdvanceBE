@@ -67,15 +67,34 @@ export const updateLanguageController = asyncHandler(async (req: Request, res: R
  * Get all languages (Public or Admin)
  */
 export const getLanguagesController = asyncHandler(async (req: Request, res: Response) => {
-    // Optional: Filter active only if query param ?active=true exists
+    // 1. Ambil query params dari URL (contoh: /api/languages?page=1&limit=5&active=true)
     const activeOnly = req.query.active === 'true'
+    const page = parseInt(req.query.page as string) || 1
+    const limit = parseInt(req.query.limit as string) || 10
 
-    const languages = await getLanguagesService(activeOnly)
+    // 2. Panggil service
+    const {
+        languages,
+        total,
+        page: currentPage,
+        limit: currentLimit
+    } = await getLanguagesService({
+        activeOnly,
+        page,
+        limit
+    })
 
+    // 3. Return response dengan struktur standar terbaik
     return res.status(HTTPSTATUS.OK).json({
+        status: 'success',
         message: 'Languages retrieved successfully',
-        count: languages.length,
-        data: languages
+        data: languages,
+        meta: {
+            total,
+            page: currentPage,
+            limit: currentLimit,
+            totalPages: Math.ceil(total / currentLimit)
+        }
     })
 })
 
