@@ -122,6 +122,7 @@ export const getLanguagesService = async (query: {
     // Menjalankan count dan find secara paralel untuk performa lebih cepat
     const [languages, total] = await Promise.all([
         LanguageModel.find(filter)
+            .select('-__v') // Exclude internal fields like __v
             .sort({ orderPosition: 1, name: 1 })
             .skip(skip)
             .limit(limit)
