@@ -11,13 +11,17 @@ import { verifyEmailTemplate } from '../../mailers/templates/template'
 import { config } from '../../config/app.config'
 
 export const getCurrentUserService = async (userId: string) => {
-    // 1. Find the Member record associated with this User ID
-    // 2. Populate 'userId' but exclude the password
-    // 3. Populate 'role' to get permissions/details
+    // 1. Find the Member record
+    // 2. Populate 'userId' (User model)
+    // 3. INSIDE 'userId', populate the 'languages.languageId' path
     const member = await MemberModel.findOne({ userId })
         .populate({
             path: 'userId',
-            select: '-password'
+            select: '-password',
+            populate: {
+                path: 'languages.languageId', // Digging into the user's language array
+                model: 'Language' // Ensuring it references the Language collection
+            }
         })
         .populate('role')
 
@@ -25,9 +29,13 @@ export const getCurrentUserService = async (userId: string) => {
         throw new BadRequestException('User or Member record not found')
     }
 
-    // Return a combined object that is easy for the frontend to use
+    // Cast the userId as any or your UserDocument type to access properties safely
+    const userDoc = member.userId as any
+
+    // Return a combined object including the new populated languages
     return {
-        user: member.userId,
+        user: userDoc,
+        languages: userDoc.languages || [], // Explicitly returning the languages for the frontend
         role: member.role,
         joinedAt: member.joinedAt
     }
