@@ -7,6 +7,7 @@ import {
 } from './user.controller'
 import { upload } from '../../config/cloudinary.config'
 import {
+    bulkRemoveUserLanguages,
     bulkUpsertUserLanguages,
     removeUserLanguage,
     upsertUserLanguage
@@ -20,5 +21,6 @@ userRoutes.put('/update-profile', updateUserProfileController)
 userRoutes.put('/update-photo', upload.single('profilePicture'), updateUserPhotoProfileController)
 userRoutes.put('/languages', upsertUserLanguage)
 userRoutes.put('/languages/bulk', bulkUpsertUserLanguages)
+userRoutes.delete('/languages/bulk', bulkRemoveUserLanguages)
 userRoutes.delete('/languages/:languageId', removeUserLanguage)
 export default userRoutes

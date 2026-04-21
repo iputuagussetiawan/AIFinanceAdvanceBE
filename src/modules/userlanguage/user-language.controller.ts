@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import { BadRequestException } from '../../utils/appError'
 import {
+    bulkRemoveUserLanguagesService,
     bulkUpdateUserLanguagesService,
     removeUserLanguageService,
     updateUserLanguageService
@@ -95,6 +96,36 @@ export const removeUserLanguage = async (req: Request, res: Response, next: Next
         return res.status(200).json({
             success: true,
             message: 'Language removed from profile successfully',
+            data: remainingLanguages
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+
+/**
+ * Handles Bulk Removal of languages
+ * DELETE /api/users/languages/bulk
+ */
+export const bulkRemoveUserLanguages = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        if (!req.user?._id) {
+            throw new BadRequestException('User authentication required')
+        }
+        const userId = req.user._id as string
+
+        // We expect { "languageIds": ["id1", "id2"] }
+        const { languageIds } = req.body
+
+        if (!languageIds || !Array.isArray(languageIds)) {
+            throw new BadRequestException('languageIds must be an array of strings')
+        }
+
+        const remainingLanguages = await bulkRemoveUserLanguagesService(userId, languageIds)
+
+        return res.status(200).json({
+            success: true,
+            message: `${languageIds.length} languages removed successfully`,
             data: remainingLanguages
         })
     } catch (error) {

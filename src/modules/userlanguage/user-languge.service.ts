@@ -73,3 +73,25 @@ export const removeUserLanguageService = async (userId: string, languageId: stri
     if (!result) throw new NotFoundException('User not found')
     return result.languages
 }
+
+/**
+ * Bulk remove languages from a user's profile
+ */
+export const bulkRemoveUserLanguagesService = async (userId: string, languageIds: string[]) => {
+    // We use $pull with $in to remove all matching IDs in one go
+    const result = await UserModel.findByIdAndUpdate(
+        userId,
+        {
+            $pull: {
+                languages: {
+                    languageId: { $in: languageIds }
+                }
+            }
+        },
+        { new: true }
+    )
+
+    if (!result) throw new NotFoundException('User not found')
+
+    return result.languages
+}
