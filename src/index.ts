@@ -20,7 +20,6 @@ import educationRoutes from './modules/education/education.route'
 import experienceRoutes from './modules/experience/experience.route'
 import jobseekerRoutes from './modules/jobseeker/jobseeker.route'
 import languageRoutes from './modules/language/language.route'
-import userLanguageRoutes from './modules/userlanguage/user-language.route'
 
 const app = express()
 app.use(cookieParser())
@@ -65,7 +64,7 @@ app.use(`${BASE_PATH}/education`, passportAuthenticateJWT, educationRoutes)
 app.use(`${BASE_PATH}/experience`, passportAuthenticateJWT, experienceRoutes)
 app.use(`${BASE_PATH}/jobseeker`, passportAuthenticateJWT, jobseekerRoutes)
 app.use(`${BASE_PATH}/language`, passportAuthenticateJWT, languageRoutes)
-app.use(`${BASE_PATH}/user-languages`, passportAuthenticateJWT, userLanguageRoutes)
+
 app.use(errorHandler)
 
 app.listen(config.PORT, async () => {

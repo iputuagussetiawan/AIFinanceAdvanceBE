@@ -1,60 +1,20 @@
 import mongoose, { Schema, Document, Model } from 'mongoose'
+import type { IUserLanguage } from './user-language.validation'
 
-export interface UserLanguageDocument extends Document {
-    userId: mongoose.Types.ObjectId
-    languageId: mongoose.Types.ObjectId // Ref ke Master Data Language
-    proficiency: {
-        speaking?: 'Beginner' | 'Intermediate' | 'Advanced' | 'Native'
-        listening?: 'Beginner' | 'Intermediate' | 'Advanced' | 'Native'
-        writing?: 'Beginner' | 'Intermediate' | 'Advanced' | 'Native'
-        jlptLevel?: 'N1' | 'N2' | 'N3' | 'N4' | 'N5'
-    }
-    createdAt: Date
-    updatedAt: Date
-}
-
-const userLanguageSchema = new Schema<UserLanguageDocument>(
+export const userLanguageSchema = new Schema<IUserLanguage>(
     {
-        userId: {
-            type: Schema.Types.ObjectId,
-            ref: 'User',
-            required: [true, 'User ID is required'],
-            index: true
-        },
         languageId: {
             type: Schema.Types.ObjectId,
             ref: 'Language',
-            required: [true, 'Language ID is required']
+            required: true
         },
+        name: { type: String, required: true }, // Keep the name so you don't always have to populate
         proficiency: {
-            speaking: {
-                type: String,
-                enum: ['Beginner', 'Intermediate', 'Advanced', 'Native']
-            },
-            listening: {
-                type: String,
-                enum: ['Beginner', 'Intermediate', 'Advanced', 'Native']
-            },
-            writing: {
-                type: String,
-                enum: ['Beginner', 'Intermediate', 'Advanced', 'Native']
-            },
-            jlptLevel: {
-                type: String,
-                enum: ['N1', 'N2', 'N3', 'N4', 'N5']
-            }
+            speaking: { type: String, enum: ['Beginner', 'Intermediate', 'Advanced', 'Native'] },
+            listening: { type: String, enum: ['Beginner', 'Intermediate', 'Advanced', 'Native'] },
+            writing: { type: String, enum: ['Beginner', 'Intermediate', 'Advanced', 'Native'] },
+            jlptLevel: { type: String, enum: ['N1', 'N2', 'N3', 'N4', 'N5'] }
         }
     },
-    {
-        timestamps: true
-    }
+    { _id: false }
 )
-
-// Compound Index: Satu user tidak boleh punya 2 entry untuk bahasa yang sama
-userLanguageSchema.index({ userId: 1, languageId: 1 }, { unique: true })
-
-const UserLanguageModel: Model<UserLanguageDocument> =
-    mongoose.models.UserLanguage ||
-    mongoose.model<UserLanguageDocument>('UserLanguage', userLanguageSchema)
-
-export default UserLanguageModel

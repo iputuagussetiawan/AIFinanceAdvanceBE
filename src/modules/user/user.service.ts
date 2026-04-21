@@ -98,7 +98,6 @@ export const updateUserService = async (
         user.profilePicture = profilePic.path
     }
 
-    user.name = body.name || user.name
     user.bio = body.bio || user.bio
 
     if (body.password) {
@@ -155,7 +154,6 @@ export const updateUserProfileService = async (userId: string, body: UpdateUserI
 
     const { name, firstName, lastName, jobTitle, bio, phoneNumber, address, website } = body
 
-    user.name = name || user.name
     user.bio = bio || user.bio
 
     user.firstName = firstName || user.firstName

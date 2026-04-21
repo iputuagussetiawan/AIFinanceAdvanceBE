@@ -1,17 +1,42 @@
-import type { Request, Response } from 'express'
+import type { NextFunction, Request, Response } from 'express'
 import { asyncHandler } from '../../middlewares/asyncHandler.middleware'
 import { HTTPSTATUS } from '../../config/http.config'
 import { languageValidation, updateLanguageValidation } from './language.validation'
 import {
     createLanguageService,
     updateLanguageService,
-    getLanguagesService,
     deleteLanguageService,
     bulkCreateLanguageService,
-    getLanguageByIdService
+    getLanguageByIdService,
+    getLanguagesPaginatedService
 } from './language.service'
 import { BadRequestException } from '../../utils/appError'
 import z from 'zod'
+
+export const getLanguagesController = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        // Extract query params and cast types
+        const page = parseInt(req.query.page as string) || 1
+        const limit = parseInt(req.query.limit as string) || 10
+        const search = req.query.search as string
+
+        // Handle boolean conversion for isActive (optional)
+        let isActive: boolean | undefined = undefined
+        if (req.query.isActive === 'true') isActive = true
+        if (req.query.isActive === 'false') isActive = false
+
+        const result = await getLanguagesPaginatedService(page, limit, search, isActive)
+
+        return res.status(200).json({
+            success: true,
+            message: 'Successfully fetched languages',
+            ...result
+        })
+    } catch (error) {
+        // Pass the error to your Express error handling middleware
+        next(error)
+    }
+}
 
 /**
  * Create a new master language
@@ -60,41 +85,6 @@ export const updateLanguageController = asyncHandler(async (req: Request, res: R
     return res.status(HTTPSTATUS.OK).json({
         message: 'Language updated successfully',
         data: updatedLanguage
-    })
-})
-
-/**
- * Get all languages (Public or Admin)
- */
-export const getLanguagesController = asyncHandler(async (req: Request, res: Response) => {
-    // 1. Ambil query params dari URL (contoh: /api/languages?page=1&limit=5&active=true)
-    const activeOnly = req.query.active === 'true'
-    const page = parseInt(req.query.page as string) || 1
-    const limit = parseInt(req.query.limit as string) || 10
-
-    // 2. Panggil service
-    const {
-        languages,
-        total,
-        page: currentPage,
-        limit: currentLimit
-    } = await getLanguagesService({
-        activeOnly,
-        page,
-        limit
-    })
-
-    // 3. Return response dengan struktur standar terbaik
-    return res.status(HTTPSTATUS.OK).json({
-        status: 'success',
-        message: 'Languages retrieved successfully',
-        data: languages,
-        meta: {
-            total,
-            page: currentPage,
-            limit: currentLimit,
-            totalPages: Math.ceil(total / currentLimit)
-        }
     })
 })
 

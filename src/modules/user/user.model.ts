@@ -1,8 +1,11 @@
-import mongoose, { Document, Schema } from 'mongoose'
+import mongoose, { Document, Schema, type Types } from 'mongoose'
 import { compareValue, hashValue } from '../../utils/bcrypt'
+import type { IUserLanguage } from '../userlanguage/user-language.validation'
+import { userLanguageSchema } from '../userlanguage/user-language.model'
+
+// _id: false prevents Mongoose from creating a unique ID for every array item
 
 export interface UserDocument extends Document {
-    name: string
     firstName: string // New: Added from image
     lastName: string
     email: string
@@ -16,12 +19,13 @@ export interface UserDocument extends Document {
     isEmailVerified: boolean
     isActive: boolean
     lastLogin: Date | null
-    currentCompany?: mongoose.Types.ObjectId | null
+    currentCompany: mongoose.Types.ObjectId | null
     onboardingComplete: boolean
     createdAt: Date
     updatedAt: Date
     comparePassword(value: string): Promise<boolean>
     omitPassword(): Omit<UserDocument, 'password'>
+    languages?: IUserLanguage[]
 }
 
 const userSchema = new Schema<UserDocument>(
@@ -84,7 +88,11 @@ const userSchema = new Schema<UserDocument>(
         },
         isActive: { type: Boolean, default: true },
         lastLogin: { type: Date, default: null },
-        onboardingComplete: { type: Boolean, default: false }
+        onboardingComplete: { type: Boolean, default: false },
+        languages: {
+            type: [userLanguageSchema],
+            default: []
+        }
     },
     {
         timestamps: true,

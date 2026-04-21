@@ -1,7 +1,63 @@
 import mongoose from 'mongoose'
 import { NotFoundException, ConflictException, BadRequestException } from '../../utils/appError'
-import type { LanguageDTO } from './language.validation'
+import type { LanguageDTO, UpdateLanguageDTO } from './language.validation'
 import LanguageModel, { type LanguageDocument } from './language.model'
+import { FilterQuery } from 'mongoose'
+
+export interface PaginationResponse {
+    data: LanguageDocument[]
+    meta: {
+        totalData: number
+        totalPage: number
+        currentPage: number
+        limit: number
+    }
+}
+
+export const getLanguagesPaginatedService = async (
+    page: number = 1,
+    limit: number = 10,
+    search?: string,
+    isActive?: boolean
+) => {
+    if (page < 1 || limit < 1) {
+        throw new BadRequestException('Page and limit must be greater than 0')
+    }
+
+    const query: FilterQuery<LanguageDocument> = {}
+
+    if (search) {
+        query.$or = [
+            { name: { $regex: search, $options: 'i' } },
+            { description: { $regex: search, $options: 'i' } }
+        ]
+    }
+
+    if (typeof isActive === 'boolean') {
+        query.isActive = isActive
+    }
+
+    const skip = (page - 1) * limit
+
+    const [data, totalData] = await Promise.all([
+        LanguageModel.find(query)
+            .sort({ orderPosition: 1, name: 1 })
+            .skip(skip)
+            .limit(limit)
+            .lean(),
+        LanguageModel.countDocuments(query)
+    ])
+
+    return {
+        data,
+        meta: {
+            totalData,
+            totalPage: Math.ceil(totalData / limit),
+            currentPage: page,
+            limit
+        }
+    }
+}
 
 /**
  * Create a new master language entry
@@ -70,7 +126,7 @@ export const bulkCreateLanguageService = async (languages: LanguageDTO[]) => {
 /**
  * Update a language entry by its ID
  */
-export const updateLanguageService = async (id: string, body: Partial<LanguageDTO>) => {
+export const updateLanguageService = async (id: string, body: UpdateLanguageDTO) => {
     // Validate ID format
     if (!mongoose.Types.ObjectId.isValid(id)) {
         throw new Error('Invalid Language ID format')
@@ -97,44 +153,6 @@ export const updateLanguageService = async (id: string, body: Partial<LanguageDT
         throw error
     } finally {
         session.endSession()
-    }
-}
-
-/**
- * Fetch languages for the application
- * @param activeOnly - If true, only returns languages where isActive is true
- */
-/**
- * Fetch all languages with pagination and metadata
- */
-export const getLanguagesService = async (query: {
-    activeOnly?: boolean
-    page?: number
-    limit?: number
-}) => {
-    const { activeOnly = false, page = 1, limit = 10 } = query
-
-    // Menghitung jumlah data yang dilewati
-    const skip = (page - 1) * limit
-
-    const filter = activeOnly ? { isActive: true } : {}
-
-    // Menjalankan count dan find secara paralel untuk performa lebih cepat
-    const [languages, total] = await Promise.all([
-        LanguageModel.find(filter)
-            .select('-__v') // Exclude internal fields like __v
-            .sort({ orderPosition: 1, name: 1 })
-            .skip(skip)
-            .limit(limit)
-            .lean(),
-        LanguageModel.countDocuments(filter)
-    ])
-
-    return {
-        languages: languages as unknown as LanguageDocument[],
-        total,
-        page,
-        limit
     }
 }
 
