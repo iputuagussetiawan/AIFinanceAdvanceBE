@@ -1,3 +1,4 @@
+import type mongoose from 'mongoose'
 import { z } from 'zod'
 
 // --- Reusable Base Schemas ---
@@ -32,8 +33,5 @@ export const userObject = z.object({
         .max(100, 'Password is too long')
 })
 
-// For updates, we use .partial() so you don't have to send every field
 export const updateUserSchema = userObject.partial()
-
-// Extract the type from the schema
 export type UpdateUserInputType = z.infer<typeof updateUserSchema>
