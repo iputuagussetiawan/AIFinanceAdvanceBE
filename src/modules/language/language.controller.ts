@@ -13,57 +13,58 @@ import {
 import { BadRequestException } from '../../utils/appError'
 import z from 'zod'
 
-export const getLanguagesController = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        // Extract query params and cast types
-        const page = parseInt(req.query.page as string) || 1
-        const limit = parseInt(req.query.limit as string) || 10
-        const search = req.query.search as string
+/**
+ * Get paginated list of available languages
+ * Path: GET /api/languages
+ */
+export const getLanguagesController = asyncHandler(async (req: Request, res: Response) => {
+    // 1. Extract and parse query parameters
+    const page = Number(req.query.page) || 1
+    const limit = Number(req.query.limit) || 10
+    const search = req.query.search as string
 
-        // Handle boolean conversion for isActive (optional)
-        let isActive: boolean | undefined = undefined
-        if (req.query.isActive === 'true') isActive = true
-        if (req.query.isActive === 'false') isActive = false
+    // 2. Handle boolean conversion for isActive
+    // This correctly handles 'true' as true, 'false' as false, and everything else as undefined
+    const isActive =
+        req.query.isActive === 'true' ? true : req.query.isActive === 'false' ? false : undefined
 
-        const result = await getLanguagesPaginatedService(page, limit, search, isActive)
+    // 3. Call the service
+    const result = await getLanguagesPaginatedService(page, limit, search, isActive)
 
-        return res.status(200).json({
-            success: true,
-            message: 'Successfully fetched languages',
-            ...result
-        })
-    } catch (error) {
-        // Pass the error to your Express error handling middleware
-        next(error)
-    }
-}
+    // 4. Return clean response using your status constants
+    return res.status(HTTPSTATUS.OK).json({
+        success: true,
+        message: 'Successfully fetched languages',
+        ...result
+    })
+})
 
 /**
  * Create a new master language
  */
 export const createLanguageController = asyncHandler(async (req: Request, res: Response) => {
-    // 1. Validate incoming data
     const body = languageValidation.parse(req.body)
-
-    // 2. Call service (No userId needed for Master Data)
     const language = await createLanguageService(body)
 
-    // 3. Return response
     return res.status(HTTPSTATUS.CREATED).json({
+        success: true,
         message: 'Language created successfully',
         data: language
     })
 })
 
+/**
+ * Bulk insert multiple master languages
+ */
 export const bulkCreateLanguageController = asyncHandler(async (req: Request, res: Response) => {
     // Validate that req.body is an array of languages
     const validatedData = z.array(languageValidation).parse(req.body)
-
     const result = await bulkCreateLanguageService(validatedData)
 
     return res.status(HTTPSTATUS.CREATED).json({
+        success: true,
         message: 'Languages bulk inserted successfully',
-        ...result
+        data: result // Changed to 'data' for consistency with single create
     })
 })
 
@@ -71,18 +72,14 @@ export const bulkCreateLanguageController = asyncHandler(async (req: Request, re
  * Update a specific master language
  */
 export const updateLanguageController = asyncHandler(async (req: Request, res: Response) => {
-    // 1. Validate body (ensure ID and partial fields are correct)
+    const { id } = req.params
+    if (!id) throw new BadRequestException('Language ID is required')
+
     const validatedData = updateLanguageValidation.parse(req.body)
-    // 2. Call update service
-    const { id } = req.params as { id: string }
+    const updatedLanguage = await updateLanguageService(id.toString(), validatedData)
 
-    if (!id) {
-        throw new BadRequestException('Language ID is required')
-    }
-    const updatedLanguage = await updateLanguageService(id, validatedData)
-
-    // 3. Return response
     return res.status(HTTPSTATUS.OK).json({
+        success: true,
         message: 'Language updated successfully',
         data: updatedLanguage
     })
@@ -92,15 +89,13 @@ export const updateLanguageController = asyncHandler(async (req: Request, res: R
  * Get a single language by its ID
  */
 export const getLanguageByIdController = asyncHandler(async (req: Request, res: Response) => {
-    const { id } = req.params as { id: string }
+    const { id } = req.params
+    if (!id) throw new BadRequestException('Language ID is required')
 
-    if (!id) {
-        throw new BadRequestException('Language ID is required')
-    }
-
-    const language = await getLanguageByIdService(id)
+    const language = await getLanguageByIdService(id.toString())
 
     return res.status(HTTPSTATUS.OK).json({
+        success: true,
         message: 'Language retrieved successfully',
         data: language
     })
@@ -110,15 +105,13 @@ export const getLanguageByIdController = asyncHandler(async (req: Request, res: 
  * Delete a language from master data
  */
 export const deleteLanguageController = asyncHandler(async (req: Request, res: Response) => {
-    const { id } = req.params as { id: string }
+    const { id } = req.params
+    if (!id) throw new BadRequestException('Language ID is required')
 
-    if (!id) {
-        throw new BadRequestException('Language ID is required')
-    }
-
-    await deleteLanguageService(id)
+    await deleteLanguageService(id.toString())
 
     return res.status(HTTPSTATUS.OK).json({
+        success: true,
         message: 'Language deleted successfully'
     })
 })

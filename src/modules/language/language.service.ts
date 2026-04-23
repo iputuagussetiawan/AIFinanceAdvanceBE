@@ -41,6 +41,7 @@ export const getLanguagesPaginatedService = async (
 
     const [data, totalData] = await Promise.all([
         LanguageModel.find(query)
+            .select('-__v')
             .sort({ orderPosition: 1, name: 1 })
             .skip(skip)
             .limit(limit)
@@ -166,7 +167,7 @@ export const getLanguageByIdService = async (id: string): Promise<LanguageDocume
     }
 
     // 2. Cari data berdasarkan ID
-    const language = await LanguageModel.findById(id).lean()
+    const language = await LanguageModel.findById(id).select('-__v').lean()
 
     // 3. Jika tidak ditemukan, lempar NotFoundException
     if (!language) {
