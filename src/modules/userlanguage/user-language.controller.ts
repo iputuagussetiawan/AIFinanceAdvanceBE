@@ -1,5 +1,10 @@
-import { Request, Response, NextFunction } from 'express'
+import { Request, Response } from 'express'
+
 import { BadRequestException } from '../../utils/appError'
+import { HTTPSTATUS } from '../../config/http.config'
+import { z } from 'zod'
+import { asyncHandler } from '../../middlewares/asyncHandler.middleware'
+import { userLanguageValidation } from './user-language.validation'
 import {
     bulkRemoveUserLanguagesService,
     bulkUpdateUserLanguagesService,
@@ -8,127 +13,90 @@ import {
 } from './user-languge.service'
 
 /**
- * Handles Add or Update of a language proficiency
+ * Handles Add or Update of a single language proficiency
  * PUT /api/users/languages
  */
-export const upsertUserLanguage = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        // 1. Ensure user exists (Safety check for TypeScript)
-        if (!req.user?._id) {
-            throw new BadRequestException('User authentication required')
-        }
+export const upsertUserLanguage = asyncHandler(async (req: Request, res: Response) => {
+    // 1. Validate userId
+    const userId = req.user?._id as string
+    if (!userId) throw new BadRequestException('User authentication required')
 
-        const userId = req.user._id as string
-        const languageData = req.body
+    // 2. Validate body with Zod
+    const body = userLanguageValidation.parse(req.body)
 
-        // 2. Basic check for body (if Zod fails or is bypassed)
-        if (!languageData.languageId || !languageData.name) {
-            throw new BadRequestException('languageId and name are required')
-        }
+    // 3. Call service
+    const updatedLanguages = await updateUserLanguageService(userId, body)
 
-        // 3. Call service to update the embedded array
-        const updatedLanguages = await updateUserLanguageService(userId, languageData)
-
-        return res.status(200).json({
-            success: true,
-            message: 'Language proficiency updated successfully',
-            data: updatedLanguages
-        })
-    } catch (error) {
-        next(error)
-    }
-}
+    return res.status(HTTPSTATUS.OK).json({
+        success: true,
+        message: 'Language proficiency updated successfully',
+        data: updatedLanguages
+    })
+})
 
 /**
  * Handles Bulk Add or Update of language proficiencies
  * PUT /api/users/languages/bulk
  */
-export const bulkUpsertUserLanguages = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        // 1. Get the current user from auth middleware
-        if (!req.user?._id) {
-            throw new BadRequestException('User authentication required')
-        }
-        const userId = req.user._id as string
+export const bulkUpsertUserLanguages = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.user?._id as string
+    if (!userId) throw new BadRequestException('User authentication required')
 
-        // 2. Extract the languages array from the body
-        // We expect a body format like: { "languages": [...] }
-        const { languages } = req.body
+    // 1. Extract and Validate that it is an array using Zod
+    const { languages } = req.body
+    const validatedLanguages = z.array(userLanguageValidation).parse(languages)
 
-        // 3. Validation: Ensure it is actually an array
-        if (!languages || !Array.isArray(languages)) {
-            throw new BadRequestException('Request body must contain a "languages" array')
-        }
+    // 2. Call the bulk service
+    const updatedLanguages = await bulkUpdateUserLanguagesService(userId, validatedLanguages)
 
-        if (languages.length === 0) {
-            throw new BadRequestException('Languages array cannot be empty')
-        }
-
-        // 4. Call the bulk service
-        const updatedLanguages = await bulkUpdateUserLanguagesService(userId, languages)
-
-        // 5. Success Response
-        return res.status(200).json({
-            success: true,
-            message: `${languages.length} languages processed successfully`,
-            data: updatedLanguages
-        })
-    } catch (error) {
-        next(error) // Pass to your global error handler
-    }
-}
+    return res.status(HTTPSTATUS.OK).json({
+        success: true,
+        message: `${validatedLanguages.length} languages processed successfully`,
+        data: updatedLanguages
+    })
+})
 
 /**
- * Removes a specific language from the user's array
+ * Removes a specific language from the user's profile
  * DELETE /api/users/languages/:languageId
  */
-export const removeUserLanguage = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        if (!req.user?._id) {
-            throw new BadRequestException('User authentication required')
-        }
+export const removeUserLanguage = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.user?._id as string
+    if (!userId) throw new BadRequestException('User authentication required')
 
-        const userId = req.user._id as string
-        const languageId = req.params.languageId as string
+    const { languageId } = req.params
+    if (!languageId) throw new BadRequestException('Language ID is required')
 
-        const remainingLanguages = await removeUserLanguageService(userId, languageId)
+    const remainingLanguages = await removeUserLanguageService(userId, languageId.toString())
 
-        return res.status(200).json({
-            success: true,
-            message: 'Language removed from profile successfully',
-            data: remainingLanguages
-        })
-    } catch (error) {
-        next(error)
-    }
-}
+    return res.status(HTTPSTATUS.OK).json({
+        success: true,
+        message: 'Language removed from profile successfully',
+        data: remainingLanguages
+    })
+})
 
 /**
  * Handles Bulk Removal of languages
  * DELETE /api/users/languages/bulk
  */
-export const bulkRemoveUserLanguages = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        if (!req.user?._id) {
-            throw new BadRequestException('User authentication required')
-        }
-        const userId = req.user._id as string
+export const bulkRemoveUserLanguages = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.user?._id as string
+    if (!userId) throw new BadRequestException('User authentication required')
 
-        // We expect { "languageIds": ["id1", "id2"] }
-        const { languageIds } = req.body
+    // 1. Validate that languageIds is an array of strings
+    const { languageIds } = req.body
+    const validatedIds = z.array(z.string()).parse(languageIds)
 
-        if (!languageIds || !Array.isArray(languageIds)) {
-            throw new BadRequestException('languageIds must be an array of strings')
-        }
-
-        const remainingLanguages = await bulkRemoveUserLanguagesService(userId, languageIds)
-
-        return res.status(200).json({
-            success: true,
-            message: `${languageIds.length} languages removed successfully`,
-            data: remainingLanguages
-        })
-    } catch (error) {
-        next(error)
+    if (validatedIds.length === 0) {
+        throw new BadRequestException('Please provide at least one language ID to remove')
     }
-}
+
+    const remainingLanguages = await bulkRemoveUserLanguagesService(userId, validatedIds)
+
+    return res.status(HTTPSTATUS.OK).json({
+        success: true,
+        message: `${validatedIds.length} languages removed successfully`,
+        data: remainingLanguages
+    })
+})

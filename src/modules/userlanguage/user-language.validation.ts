@@ -1,15 +1,20 @@
 import type mongoose from 'mongoose'
+import { Types } from 'mongoose'
+import { z } from 'zod'
 
-export interface IUserLanguage {
-    // Diubah dari languageId menjadi language
-    language: mongoose.Types.ObjectId | string
+const ProficiencyLevel = z.enum(['Beginner', 'Intermediate', 'Advanced', 'Native'])
+const JlptLevel = z.enum(['N1', 'N2', 'N3', 'N4', 'N5'])
 
-    // Field 'name' telah dihapus sesuai permintaan
+export const userLanguageValidation = z.object({
+    _id: z.string().optional(),
+    language: z.union([z.string(), z.instanceof(Types.ObjectId)]),
+    proficiency: z.object({
+        speaking: ProficiencyLevel.optional(),
+        listening: ProficiencyLevel.optional(),
+        writing: ProficiencyLevel.optional(),
+        jlptLevel: JlptLevel.nullable().optional()
+    })
+})
 
-    proficiency: {
-        speaking?: 'Beginner' | 'Intermediate' | 'Advanced' | 'Native'
-        listening?: 'Beginner' | 'Intermediate' | 'Advanced' | 'Native'
-        writing?: 'Beginner' | 'Intermediate' | 'Advanced' | 'Native'
-        jlptLevel?: 'N1' | 'N2' | 'N3' | 'N4' | 'N5' | null
-    }
-}
+// Extract the Type for use in your services/controllers
+export type IUserLanguage = z.infer<typeof userLanguageValidation>
