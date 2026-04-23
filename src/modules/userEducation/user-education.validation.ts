@@ -1,25 +1,49 @@
+import { z } from 'zod'
 import { Types } from 'mongoose'
 
-export interface IUserEducation {
-    // Reference to an Institution model
-    _id?: string | Types.ObjectId // Add this line
-    institution: Types.ObjectId | string
+export const userEducationValidation = z
+    .object({
+        // --- Identifiers ---
+        // Optional _id for updates. We allow string or ObjectId.
+        _id: z.union([z.string(), z.instanceof(Types.ObjectId)]).optional(),
 
-    // Core details
-    degree: string
-    fieldOfStudy: string
+        // Reference to Institution. Usually a string ID from the frontend.
+        institution: z.union([z.string(), z.instanceof(Types.ObjectId)]),
 
-    // Timeframe
-    startDate: Date
-    endDate?: Date | null // Nullable for "Present" or ongoing education
-    isCurrent: boolean // Helpful flag for UI logic (e.g., "2022 - Present")
+        // --- Core Details ---
+        degree: z.string().min(2, 'Degree is required').trim(),
+        fieldOfStudy: z.string().min(2, 'Field of study is required').trim(),
 
-    // Academic performance
-    grade?: string // Supports GPA (e.g., "3.8/4.0") or classification (e.g., "First Class")
+        // --- Timeframe ---
+        // z.coerce.date() converts ISO strings from the frontend into JS Date objects
+        startDate: z.coerce.date({
+            required_error: 'Start date is required'
+        }),
+        endDate: z.coerce.date().nullable().optional(),
+        isCurrent: z.boolean().default(false),
 
-    // Additional content
-    description?: string // Achievements, societies, or relevant coursework
+        // --- Academic Performance ---
+        grade: z.string().optional(),
 
-    // UI/UX handling
-    orderPosition: number // For manual sorting of education history
-}
+        // --- Additional Content ---
+        description: z.string().max(1000, 'Description is too long').optional(),
+
+        // --- UI/UX Handling ---
+        orderPosition: z.number().int().nonnegative().default(0)
+    })
+    .refine(
+        (data) => {
+            // Logic: If not current and endDate exists, endDate must be after startDate
+            if (!data.isCurrent && data.endDate) {
+                return data.endDate >= data.startDate
+            }
+            return true
+        },
+        {
+            message: 'End date must be after the start date',
+            path: ['endDate']
+        }
+    )
+
+// Extract the TypeScript Interface from the Zod Schema
+export type IUserEducation = z.infer<typeof userEducationValidation>

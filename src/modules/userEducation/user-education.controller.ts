@@ -1,110 +1,92 @@
-import { Request, Response, NextFunction } from 'express'
-import * as EducationService from './user-education.service'
+import { Request, Response } from 'express'
 import { BadRequestException } from '../../utils/appError'
+import { HTTPSTATUS } from '../../config/http.config'
+import { userEducationValidation } from './user-education.validation'
+import * as EducationService from './user-education.service'
+import { z } from 'zod'
+import { asyncHandler } from '../../middlewares/asyncHandler.middleware'
 
 export const UserEducationController = {
     /**
      * Update or Add a single education entry
-     * PUT /api/user/education
      */
-    updateEducation: async (req: Request, res: Response, next: NextFunction) => {
-        try {
-            if (!req.user?._id) {
-                throw new BadRequestException('User authentication required')
-            }
-            const userId = req.user._id as string
-            const educationData = req.body
+    updateEducation: asyncHandler(async (req: Request, res: Response) => {
+        const userId = req.user?._id as string
+        if (!userId) throw new BadRequestException('User authentication required')
 
-            const data = await EducationService.updateUserEducationService(userId, educationData)
+        // Validate body with Zod
+        const body = userEducationValidation.parse(req.body)
 
-            res.status(200).json({
-                success: true,
-                message: 'Education updated successfully',
-                data
-            })
-        } catch (error) {
-            next(error)
-        }
-    },
+        const data = await EducationService.updateUserEducationService(userId, body)
+
+        return res.status(HTTPSTATUS.OK).json({
+            success: true,
+            message: 'Education updated successfully',
+            data
+        })
+    }),
 
     /**
      * Bulk Sync Education (Add/Update multiple)
-     * POST /api/user/education/bulk
      */
-    bulkUpdateEducation: async (req: Request, res: Response, next: NextFunction) => {
-        try {
-            if (!req.user?._id) {
-                throw new BadRequestException('User authentication required')
-            }
-            const userId = req.user._id as string
-            const { educations } = req.body // Expects { educations: [...] }
+    bulkUpdateEducation: asyncHandler(async (req: Request, res: Response) => {
+        const userId = req.user?._id as string
+        if (!userId) throw new BadRequestException('User authentication required')
 
-            const data = await EducationService.bulkUpdateUserEducationService(userId, educations)
+        // Extract and validate array
+        const { educations } = req.body
+        const validatedEducations = z.array(userEducationValidation).parse(educations)
 
-            res.status(200).json({
-                success: true,
-                message: 'Education history synced successfully',
-                data
-            })
-        } catch (error) {
-            next(error)
-        }
-    },
+        const data = await EducationService.bulkUpdateUserEducationService(
+            userId,
+            validatedEducations
+        )
+
+        return res.status(HTTPSTATUS.OK).json({
+            success: true,
+            message: 'Education history synced successfully',
+            data
+        })
+    }),
 
     /**
      * Remove a single education entry
-     * DELETE /api/user/education/:id
      */
-    removeEducation: async (req: Request, res: Response, next: NextFunction) => {
-        try {
-            if (!req.user?._id) {
-                throw new BadRequestException('User authentication required')
-            }
-            const userId = req.user._id as string
+    removeEducation: asyncHandler(async (req: Request, res: Response) => {
+        const userId = req.user?._id as string
+        if (!userId) throw new BadRequestException('User authentication required')
 
-            // FIX: Change 'id' to 'educationId' to match your route
-            const { educationId } = req.params
+        const { educationId } = req.params
+        if (!educationId) throw new BadRequestException('Education ID is required')
 
-            if (!educationId) {
-                throw new BadRequestException('Education ID is required')
-            }
+        const data = await EducationService.removeUserEducationService(
+            userId,
+            educationId.toString()
+        )
 
-            const data = await EducationService.removeUserEducationService(
-                userId.toString(),
-                educationId.toString()
-            )
-
-            res.status(200).json({
-                success: true,
-                message: 'Education entry removed',
-                data
-            })
-        } catch (error) {
-            next(error)
-        }
-    },
+        return res.status(HTTPSTATUS.OK).json({
+            success: true,
+            message: 'Education entry removed',
+            data
+        })
+    }),
 
     /**
      * Bulk Remove education entries
-     * DELETE /api/user/education/bulk
      */
-    bulkRemoveEducation: async (req: Request, res: Response, next: NextFunction) => {
-        try {
-            if (!req.user?._id) {
-                throw new BadRequestException('User authentication required')
-            }
-            const userId = req.user._id as string
-            const { educationIds } = req.body // Expects { educationIds: ['id1', 'id2'] }
+    bulkRemoveEducation: asyncHandler(async (req: Request, res: Response) => {
+        const userId = req.user?._id as string
+        if (!userId) throw new BadRequestException('User authentication required')
 
-            const data = await EducationService.bulkRemoveUserEducationService(userId, educationIds)
+        const { educationIds } = req.body
+        const validatedIds = z.array(z.string()).parse(educationIds)
 
-            res.status(200).json({
-                success: true,
-                message: 'Selected education entries removed',
-                data
-            })
-        } catch (error) {
-            next(error)
-        }
-    }
+        const data = await EducationService.bulkRemoveUserEducationService(userId, validatedIds)
+
+        return res.status(HTTPSTATUS.OK).json({
+            success: true,
+            message: 'Selected education entries removed',
+            data
+        })
+    })
 }
