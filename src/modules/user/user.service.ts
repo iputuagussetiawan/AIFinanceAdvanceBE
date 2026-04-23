@@ -17,12 +17,19 @@ export const getCurrentUserService = async (userId: string) => {
     const member = await MemberModel.findOne({ userId })
         .populate({
             path: 'userId',
-            select: '-password',
-            populate: {
-                path: 'languages.language', // Digging into the user's language array
-                select: '-__v -createdAt -updatedAt',
-                model: 'Language' // Ensuring it references the Language collection
-            }
+            select: '-password -__v',
+            populate: [
+                {
+                    path: 'languages.language',
+                    select: '-__v -createdAt -updatedAt',
+                    model: 'Language'
+                },
+                {
+                    path: 'educations.institution', // Populating the institution inside educations
+                    select: '-__v -createdAt -updatedAt',
+                    model: 'Institution' // Ensure this matches your Institution model name
+                }
+            ]
         })
         .populate('role')
 
