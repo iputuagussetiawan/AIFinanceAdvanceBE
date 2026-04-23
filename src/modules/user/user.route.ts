@@ -12,7 +12,7 @@ import {
     removeUserLanguage,
     upsertUserLanguage
 } from '../userlanguage/user-language.controller'
-import { UserEducationController } from '../userleducation/user-education.controller'
+import { UserEducationController } from '../userEducation/user-education.controller'
 
 const userRoutes = Router()
 
