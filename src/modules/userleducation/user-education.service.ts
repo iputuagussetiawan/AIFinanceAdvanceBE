@@ -90,15 +90,11 @@ export const removeUserEducationService = async (userId: string, educationId: st
     const result = await UserModel.findByIdAndUpdate(
         userId,
         {
+            // Mongoose needs the actual field name in the DB, which is always _id
             $pull: { educations: { _id: educationId } }
         },
         { new: true }
     )
-
-    if (!result) throw new NotFoundException('User not found')
-
-    await result.populate('educations.institution')
-    return result.educations
 }
 
 /**

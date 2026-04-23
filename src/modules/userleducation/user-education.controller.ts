@@ -61,9 +61,18 @@ export const UserEducationController = {
                 throw new BadRequestException('User authentication required')
             }
             const userId = req.user._id as string
-            const educationId = req.params.id as string
 
-            const data = await EducationService.removeUserEducationService(userId, educationId)
+            // FIX: Change 'id' to 'educationId' to match your route
+            const { educationId } = req.params
+
+            if (!educationId) {
+                throw new BadRequestException('Education ID is required')
+            }
+
+            const data = await EducationService.removeUserEducationService(
+                userId.toString(),
+                educationId.toString()
+            )
 
             res.status(200).json({
                 success: true,
