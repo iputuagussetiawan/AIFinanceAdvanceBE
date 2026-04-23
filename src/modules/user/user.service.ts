@@ -19,7 +19,8 @@ export const getCurrentUserService = async (userId: string) => {
             path: 'userId',
             select: '-password',
             populate: {
-                path: 'languages.languageId', // Digging into the user's language array
+                path: 'languages.language', // Digging into the user's language array
+                select: '-__v -createdAt -updatedAt',
                 model: 'Language' // Ensuring it references the Language collection
             }
         })
@@ -35,7 +36,6 @@ export const getCurrentUserService = async (userId: string) => {
     // Return a combined object including the new populated languages
     return {
         user: userDoc,
-        languages: userDoc.languages || [], // Explicitly returning the languages for the frontend
         role: member.role,
         joinedAt: member.joinedAt
     }

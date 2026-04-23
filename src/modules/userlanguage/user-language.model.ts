@@ -3,12 +3,11 @@ import type { IUserLanguage } from './user-language.validation'
 
 export const userLanguageSchema = new Schema<IUserLanguage>(
     {
-        languageId: {
+        language: {
             type: Schema.Types.ObjectId,
             ref: 'Language',
             required: true
         },
-        name: { type: String, required: true }, // Keep the name so you don't always have to populate
         proficiency: {
             speaking: { type: String, enum: ['Beginner', 'Intermediate', 'Advanced', 'Native'] },
             listening: { type: String, enum: ['Beginner', 'Intermediate', 'Advanced', 'Native'] },
