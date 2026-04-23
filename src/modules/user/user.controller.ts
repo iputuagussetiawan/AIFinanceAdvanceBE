@@ -11,12 +11,11 @@ import { updateUserSchema } from './user.validation'
 
 export const getCurrentUserController = asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user?._id
-    const { user, role, joinedAt, languages } = await getCurrentUserService(userId)
+    const { user, role, joinedAt } = await getCurrentUserService(userId)
     return res.status(HTTPSTATUS.OK).json({
         message: 'User fetch successfully',
         user,
         role,
-        languages,
         joinedAt
     })
 })
