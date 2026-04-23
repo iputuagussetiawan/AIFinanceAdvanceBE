@@ -13,6 +13,7 @@ import {
     upsertUserLanguage
 } from '../userlanguage/user-language.controller'
 import { UserEducationController } from '../userEducation/user-education.controller'
+import { UserExperienceController } from '../userExperiences/user-experience.controller'
 
 const userRoutes = Router()
 
@@ -30,4 +31,9 @@ userRoutes.put('/educations', UserEducationController.updateEducation)
 userRoutes.put('/educations/bulk', UserEducationController.bulkUpdateEducation)
 userRoutes.delete('/educations/bulk', UserEducationController.bulkRemoveEducation)
 userRoutes.delete('/educations/:educationId', UserEducationController.removeEducation)
+
+userRoutes.put('/experiences', UserExperienceController.updateExperience)
+userRoutes.put('/experiences/bulk', UserExperienceController.bulkUpdateExperience)
+userRoutes.delete('/experiences/:experienceId', UserExperienceController.removeExperience)
+userRoutes.delete('/experiences/bulk', UserExperienceController.bulkRemoveExperience)
 export default userRoutes
