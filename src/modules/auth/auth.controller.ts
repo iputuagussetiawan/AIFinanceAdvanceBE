@@ -53,8 +53,8 @@ export const googleLoginCallback = async (req: Request, res: Response) => {
         // 2. Generate your stateless JWT
         // 3. Generate the JWT
         const access_token = signJwtToken({ userId: user._id, sessionId: session._id })
-        console.log(`✅[AUTH] Issued JWT for Google User: ${user.email}`)
-        console.log(access_token)
+        // console.log(`✅[AUTH] Issued JWT for Google User: ${user.email}`)
+        // console.log(access_token)
 
         // 3. Set the JWT in a secure HttpOnly Cookie
         // res.cookie('accessToken', access_token, {

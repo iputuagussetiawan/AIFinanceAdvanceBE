@@ -31,7 +31,19 @@ export const getSessionByIdService = async (sessionId: string) => {
     const session = await SessionModel.findById(sessionId)
         .populate({
             path: 'userId',
-            select: '-password -__v' // 👈 Password excluded here
+            select: '-password -__v', // 👈 Password excluded here
+            populate: [
+                {
+                    path: 'languages.language',
+                    select: '-__v -createdAt -updatedAt',
+                    model: 'Language'
+                },
+                {
+                    path: 'educations.institution', // Populating the institution inside educations
+                    select: '-__v -createdAt -updatedAt',
+                    model: 'Institution' // Ensure this matches your Institution model name
+                }
+            ]
         })
         .select('-expiresAt')
         .lean()

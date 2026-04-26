@@ -8,10 +8,20 @@ import {
     deleteInstitutionService,
     bulkCreateInstitutionService,
     getInstitutionByIdService,
-    getInstitutionsPaginatedService
+    getInstitutionsPaginatedService,
+    getInstitutionsService
 } from './institution.service'
 import { BadRequestException } from '../../utils/appError'
 import z from 'zod'
+
+export const getInstitutionsSimpleController = asyncHandler(async (req: Request, res: Response) => {
+    const institutions = await getInstitutionsService()
+    return res.status(HTTPSTATUS.OK).json({
+        success: true,
+        message: 'Institutions fetched successfully',
+        data: institutions
+    })
+})
 
 /**
  * Mendapatkan daftar institusi dengan paginasi, pencarian, dan filter tipe

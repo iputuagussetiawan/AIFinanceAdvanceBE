@@ -13,7 +13,7 @@ import { passportAuthenticateJWT } from './config/passport.config'
 import companyRoutes from './modules/company/company.route'
 import userRoutes from './modules/user/user.route'
 import authRoutes from './modules/auth/auth.route'
-import memberRoutes from './modules/member/member.route'
+// import memberRoutes from './modules/member/member.route'
 import sessionRoutes from './modules/session/session.route'
 import cookieParser from 'cookie-parser'
 import educationRoutes from './modules/education/education.route'
@@ -59,13 +59,14 @@ app.get(
 app.use(`${BASE_PATH}/auth`, authRoutes)
 app.use(`${BASE_PATH}/user`, passportAuthenticateJWT, userRoutes)
 app.use(`${BASE_PATH}/company`, passportAuthenticateJWT, companyRoutes)
-app.use(`${BASE_PATH}/member`, passportAuthenticateJWT, memberRoutes)
+// app.use(`${BASE_PATH}/member`, passportAuthenticateJWT, memberRoutes)
 app.use(`${BASE_PATH}/session`, passportAuthenticateJWT, sessionRoutes)
 app.use(`${BASE_PATH}/education`, passportAuthenticateJWT, educationRoutes)
 app.use(`${BASE_PATH}/experience`, passportAuthenticateJWT, experienceRoutes)
 app.use(`${BASE_PATH}/jobseeker`, passportAuthenticateJWT, jobseekerRoutes)
 app.use(`${BASE_PATH}/language`, passportAuthenticateJWT, languageRoutes)
 app.use(`${BASE_PATH}/institution`, passportAuthenticateJWT, institutionRoutes)
+
 app.use(errorHandler)
 
 app.listen(config.PORT, async () => {

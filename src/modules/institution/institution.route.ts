@@ -5,7 +5,8 @@ import {
     updateInstitutionController,
     deleteInstitutionController,
     bulkCreateInstitutionController,
-    getInstitutionByIdController
+    getInstitutionByIdController,
+    getInstitutionsSimpleController
 } from './institution.controller'
 
 const institutionRoutes = Router()
@@ -25,7 +26,7 @@ institutionRoutes.post('/bulk', bulkCreateInstitutionController)
 
 // 3. Mendapatkan semua institusi (Mendukung query: ?page=1&limit=10&search=...&type=...&isActive=true)
 // GET /api/institutions
-institutionRoutes.get('/', getInstitutionsController)
+institutionRoutes.get('/', getInstitutionsSimpleController)
 
 // 4. Mendapatkan detail institusi berdasarkan ID
 // GET /api/institutions/:id

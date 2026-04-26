@@ -1,11 +1,11 @@
 import { Router } from 'express'
 import {
     createLanguageController,
-    getLanguagesController,
     updateLanguageController,
     deleteLanguageController,
     bulkCreateLanguageController,
-    getLanguageByIdController
+    getLanguageByIdController,
+    getAllLanguagesController
 } from './language.controller'
 
 const languageRoutes = Router()
@@ -20,7 +20,7 @@ languageRoutes.post('/bulk', bulkCreateLanguageController)
 
 // 3. Get all languages (Use ?active=true for frontend dropdowns)
 // GET /api/languages
-languageRoutes.get('/', getLanguagesController)
+languageRoutes.get('/', getAllLanguagesController)
 
 // 4. Get a single language by its ID
 // GET /api/languages/:id

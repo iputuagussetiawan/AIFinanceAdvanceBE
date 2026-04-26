@@ -14,6 +14,18 @@ export interface InstitutionPaginationResponse {
     }
 }
 
+export const getInstitutionsService = async () => {
+    const institutions = await InstitutionModel.find()
+        .select('-__v')
+        .sort({ orderPosition: 1, name: 1 })
+        .lean()
+
+    return institutions.map(({ _id, ...rest }) => ({
+        id: _id.toString(),
+        ...rest
+    }))
+}
+
 /**
  * Fetch institutions with pagination, search, and filters
  */

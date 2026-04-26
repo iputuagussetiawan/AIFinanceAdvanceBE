@@ -1,54 +1,51 @@
+import type mongoose from 'mongoose'
 import { z } from 'zod'
 
-// --- Reusable Base Schemas ---
-export const nameSchema = z.string().trim().min(1, { message: 'Name is required' }).max(255)
-
-// Slug: matches the lowercase, trimmed requirement of your Mongoose schema
-export const slugSchema = z.string().trim().toLowerCase().min(1, { message: 'Slug is required' })
-
-// Currency: usually 3 characters (e.g., USD, IDR)
-export const baseCurrencySchema = z
+// 1. Reusable Sub-Schemas
+const nameSchema = z
     .string()
+    .min(3, 'Company name must be at least 3 characters')
+    .max(100, 'Company name is too long')
     .trim()
-    .toUpperCase()
-    .length(3, { message: 'Currency must be a 3-letter code' })
-    .default('USD')
 
-// Fiscal Month: Number between 1 and 12
-export const fiscalYearStartMonthSchema = z.number().min(1).max(12).default(1)
-
-// MongoDB ObjectId validation
-export const ownerIdSchema = z
+const slugSchema = z
     .string()
-    .regex(/^[0-9a-fA-F]{24}$/, { message: 'Invalid Owner ID format' })
+    .min(3, 'Slug must be at least 3 characters')
+    .regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and hyphens')
+    .trim()
 
-export const isActiveSchema = z.boolean().default(true)
+const baseCurrencySchema = z
+    .string()
+    .length(3, 'Currency must be a 3-letter ISO code (e.g., IDR, USD)')
+    .toUpperCase()
 
+const isActiveSchema = z.boolean().default(true)
+
+// 2. Main Company Schema
 export const createCompanySchema = z.object({
     name: nameSchema,
     slug: slugSchema,
-    logoUrl: z.string().optional(),
-    bgUrl: z.string().optional(),
-    baseCurrency: baseCurrencySchema,
-    fiscalYearStartMonth: fiscalYearStartMonthSchema,
-    isActive: isActiveSchema.optional()
-})
 
-// For updates, we use .partial() so you don't have to send every field
+    // URL validation untuk media
+    logoUrl: z.string().url('Invalid logo URL format').optional().or(z.literal('')),
+    bgUrl: z.string().url('Invalid background URL format').optional().or(z.literal('')),
+
+    baseCurrency: baseCurrencySchema,
+    isActive: isActiveSchema.optional(),
+
+    // Tambahan umum untuk profil perusahaan rekrutmen
+    description: z.string().max(2000, 'Description is too long').optional(),
+    website: z.string().url('Invalid website URL').optional().or(z.literal('')),
+    industry: z.string().min(1, 'Industry is required').optional()
+})
 export const updateCompanySchema = createCompanySchema.partial()
 
-// Reusable ID schema for URL parameters
-export const companyIdSchema = z
-    .string()
-    .trim()
-    .min(1, { message: 'Company ID is required' })
-    .regex(/^[0-9a-fA-F]{24}$/, { message: 'Invalid Company ID format' })
+// 3. Types
+export type ICompanyInput = z.infer<typeof createCompanySchema>
+export type ICompanyUpdate = z.infer<typeof updateCompanySchema>
 
-// Extract the type from the schema
-export type CreateCompanyInputType = z.infer<typeof createCompanySchema>
-export type UpdateCompanyInputType = z.infer<typeof updateCompanySchema>
-
-export const changeRoleSchema = z.object({
-    roleId: z.string().trim().min(1),
-    memberId: z.string().trim().min(1)
-})
+export interface ICompany extends ICompanyInput {
+    _id: mongoose.Types.ObjectId | string
+    createdAt?: Date
+    updatedAt?: Date
+}

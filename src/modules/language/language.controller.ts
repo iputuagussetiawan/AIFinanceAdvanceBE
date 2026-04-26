@@ -8,11 +8,26 @@ import {
     deleteLanguageService,
     bulkCreateLanguageService,
     getLanguageByIdService,
-    getLanguagesPaginatedService
+    getLanguagesPaginatedService,
+    getAllLanguagesService
 } from './language.service'
 import { BadRequestException } from '../../utils/appError'
 import z from 'zod'
 
+export const getAllLanguagesController = asyncHandler(async (req: Request, res: Response) => {
+    // Mengambil filter isActive dari query jika ada (misal: ?isActive=true)
+    const isActiveQuery = req.query.isActive
+    const isActive = isActiveQuery !== undefined ? isActiveQuery === 'true' : undefined
+
+    // Memanggil service tanpa pagination
+    const result = await getAllLanguagesService(isActive)
+
+    return res.status(HTTPSTATUS.OK).json({
+        success: true,
+        message: 'Languages fetched successfully',
+        data: result.data // Mengambil array data hasil transformasi service
+    })
+})
 /**
  * Get paginated list of available languages
  * Path: GET /api/languages

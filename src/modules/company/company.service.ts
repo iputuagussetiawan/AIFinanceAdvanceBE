@@ -1,182 +1,119 @@
-import mongoose from 'mongoose'
+import z from 'zod'
 import { BadRequestException, NotFoundException } from '../../utils/appError'
-import CompanyModel from './company.model'
-import type { CreateCompanyInputType, UpdateCompanyInputType } from './company.validation'
-import UserModel from '../user/user.model'
-import MemberModel from '../member/member.model'
-import RoleModel from '../role/roles-permission.model'
-import { Roles } from '../role/role.enum'
-
-// export const getAllCompanyUserIsMemberService = async (userId: string) => {
-//     const memberships = await MemberModel.find({ userId })
-//         .populate('companyId')
-//         .select('-password')
-//         .exec()
-//     // Extract workspace details from memberships
-//     const companies = memberships.map((membership) => membership.companyId)
-//     return { companies }
-// }
-
-export const createCompanyService = async (userId: string, body: CreateCompanyInputType) => {
-    const user = await UserModel.findById(userId)
-    if (!user) {
-        throw new NotFoundException('User not found')
+import { CompanyModel, type CompanyDocument } from '../company/company.model'
+import {
+    createCompanySchema,
+    type ICompanyInput,
+    type ICompanyUpdate
+} from '../company/company.validation'
+/**
+ * Membuat perusahaan baru
+ */
+export const createCompanyService = async (data: ICompanyInput): Promise<CompanyDocument> => {
+    // 1. Cek apakah slug sudah digunakan
+    const existingSlug = await CompanyModel.findOne({ slug: data.slug })
+    if (existingSlug) {
+        throw new BadRequestException('Company slug is already in use')
     }
-    const ownerRole = await RoleModel.findOne({ name: Roles.OWNER })
-
-    if (!ownerRole) {
-        throw new NotFoundException('Owner role not found')
-    }
-
-    // //buat company
-    const company = new CompanyModel({
-        ...body,
-        // Ensure owner is set correctly if it differs from body.owner
-        owner: userId
-    })
-
-    //simpan company
+    // 2. Simpan ke database
+    const company = new CompanyModel(data)
     await company.save()
+    return company
+}
 
-    //  // 1. Check if name already exists (The "Unique" check)
-    // const existingCompany = await CompanyModel.findOne({
-    //     name: { $regex: new RegExp(`^${body.name}$`, 'i') }
-    // })
+/**
+ * Bulk Insert Perusahaan
+ * Cocok untuk import data dari CSV/Excel atau migrasi data
+ */
+export const bulkCreateCompanyService = async (companies: ICompanyInput[]) => {
+    // 1. Validasi seluruh array menggunakan Zod
+    const bulkSchema = z.array(createCompanySchema)
+    const validation = bulkSchema.safeParse(companies)
+    console.log(validation)
+    try {
+        /**
+         * 2. Gunakan insertMany
+         * ordered: true -> Akan berhenti jika ada satu yang error (misal duplicate slug)
+         * ordered: false -> Akan lanjut memasukkan data lain meskipun ada yang error
+         */
+        console.log(validation)
 
-    // if (existingCompany) {
-    //     // Assuming you have a custom exception handler
-    //     throw new Error('Company name already exists')
-    // }
+        const result = await CompanyModel.insertMany(validation.data, {
+            ordered: true
+        })
 
-    const member = new MemberModel({
-        userId: user._id,
-        companyId: company._id,
-        role: ownerRole._id,
-        joinedAt: new Date()
-    })
-    await member.save()
-    user.currentCompany = company._id as mongoose.Types.ObjectId
-    await user.save()
-    return {
-        company
+        return result as unknown as CompanyDocument[]
+    } catch (error: any) {
+        // Tangani error jika ada duplicate key (E11000) pada slug
+        if (error.code === 11000) {
+            throw new BadRequestException('Bulk insert failed: One or more slugs are duplicated')
+        }
+        throw error
     }
 }
 
-export const getCompanyMembersService = async (companyId: string) => {
-    // Fetch all members of the company
-    const members = await MemberModel.find({
-        companyId
-    })
-        .populate('userId', 'name email profilePicture -password')
-        .populate('role', 'name')
-    const roles = await RoleModel.find({}, { name: 1, _id: 1 }).select('-permission').lean()
-    return { members, roles }
-}
-
-export const updateCompanyByIdService = async (companyId: string, body: UpdateCompanyInputType) => {
-    const company = await CompanyModel.findById(companyId)
-    if (!company) {
-        throw new NotFoundException('Workspace not found')
-    }
-    // Update the company details
-    company.name = body.name || company.name
-    company.slug = body.slug || company.slug
-    company.logoUrl = body.logoUrl || company.logoUrl
-    company.bgUrl = body.bgUrl || company.bgUrl
-    company.baseCurrency = body.baseCurrency || company.baseCurrency
-    company.fiscalYearStartMonth = body.fiscalYearStartMonth || company.fiscalYearStartMonth
-    company.isActive = body.isActive || company.isActive
-    await company.save()
-    return {
-        company
-    }
-}
-
-export const getCompanyByIdService = async (companyId: string) => {
-    const company = await CompanyModel.findById(companyId)
-    if (!company) {
-        throw new NotFoundException('Company not found')
-    }
-
-    const members = await MemberModel.find({
-        companyId
-    }).populate('role')
-    const companyWithMembers = {
-        ...company.toObject(),
-        members
-    }
-    return {
-        company: companyWithMembers
-    }
-}
-
-// export const deleteCompanyService = async (companyId: string, userId: string) => {
-//     const session = await mongoose.startSession()
-//     session.startTransaction()
-//     try {
-//         const company = await CompanyModel.findById(companyId).session(session)
-//         // console.log('Company to delete:', company)
-//         if (!company) {
-//             throw new NotFoundException('Company not found')
-//         }
-
-//         // console.log(company.owner.toString(), userId.toString())
-//         //Check if the user owns the company
-//         if (company.owner.toString() !== userId.toString()) {
-//             throw new BadRequestException('You are not authorized to delete this company')
-//         }
-//         const user = await UserModel.findById(userId).session(session)
-//         if (!user) {
-//             throw new NotFoundException('User not found')
-//         }
-
-//         await MemberModel.deleteMany({
-//             companyId: company._id
-//         }).session(session)
-
-//         // Update the user's currentCompany if it matches the deleted company
-//         if (user?.currentCompany?.equals(companyId)) {
-//             const memberCompany = await MemberModel.findOne({ userId }).session(session)
-//             // Update the user's currentCompany
-//             user.currentCompany = memberCompany ? memberCompany.companyId : null
-//             await user.save({ session })
-//         }
-//         await company.deleteOne({ session })
-//         await session.commitTransaction()
-//         session.endSession()
-//         return {
-//             currentCompany: user.currentCompany
-//         }
-//     } catch (error) {
-//         await session.abortTransaction()
-//         session.endSession()
-//         throw error
-//     }
-// }
-
-export const changeMemberRoleService = async (
+/**
+ * Mengupdate data perusahaan
+ */
+export const updateCompanyService = async (
     companyId: string,
-    memberId: string,
-    roleId: string
-) => {
+    updateData: ICompanyUpdate
+): Promise<CompanyDocument> => {
+    // 1. Cari perusahaan
     const company = await CompanyModel.findById(companyId)
-    if (!company) {
-        throw new NotFoundException('Company not found')
+    if (!company) throw new NotFoundException('Company not found')
+
+    // 2. Jika slug diubah, pastikan slug baru belum dipakai orang lain
+    if (updateData.slug && updateData.slug !== company.slug) {
+        const slugExists = await CompanyModel.findOne({ slug: updateData.slug })
+        if (slugExists) {
+            throw new BadRequestException('The new slug is already taken')
+        }
     }
-    const role = await RoleModel.findById(roleId)
-    if (!role) {
-        throw new NotFoundException('Role not found')
+
+    // 3. Update field yang dikirim (Object.assign menangani partial update)
+    Object.assign(company, updateData)
+
+    await company.save()
+    return company
+}
+
+/**
+ * Mendapatkan detail perusahaan berdasarkan Slug (untuk Public Profile)
+ */
+export const getCompanyBySlugService = async (slug: string): Promise<CompanyDocument> => {
+    const company = await CompanyModel.findOne({ slug, isActive: true })
+    if (!company) throw new NotFoundException('Company profile not found')
+
+    return company
+}
+
+/**
+ * Mendapatkan daftar perusahaan dengan Filter & Pagination (untuk Admin Panel)
+ */
+export const getCompaniesService = async (query: any = {}) => {
+    const { page = 1, limit = 10, search = '' } = query
+    const skip = (page - 1) * limit
+
+    const filter: any = {}
+    if (search) {
+        filter.$or = [
+            { name: { $regex: search, $options: 'i' } },
+            { industry: { $regex: search, $options: 'i' } }
+        ]
     }
-    const member = await MemberModel.findOne({
-        userId: memberId,
-        companyId: companyId
-    })
-    if (!member) {
-        throw new Error('Member not found in the company')
-    }
-    member.role = role
-    await member.save()
+
+    const [data, total] = await Promise.all([
+        CompanyModel.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+        CompanyModel.countDocuments(filter)
+    ])
+
     return {
-        member
+        data,
+        meta: {
+            total,
+            page,
+            lastPage: Math.ceil(total / limit)
+        }
     }
 }

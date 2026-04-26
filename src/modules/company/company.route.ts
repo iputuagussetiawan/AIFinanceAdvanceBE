@@ -1,21 +1,11 @@
 import { Router } from 'express'
-import {
-    changeCompanyMemberRoleController,
-    createCompanyController,
-    // deleteCompanyByIdController,
-    // getAllCompaniesUserIsMemberController,
-    getCompanyByIdController,
-    getCompanyMembersController,
-    updateCompanyByIdController
-} from './company.controller'
+import * as CompanyController from './company.controller'
 
 const companyRoutes = Router()
-// companyRoutes.get('/all', getAllCompaniesUserIsMemberController)
-companyRoutes.post('/create', createCompanyController)
-companyRoutes.put('/update/:id', updateCompanyByIdController)
-companyRoutes.get('/detail/:id', getCompanyByIdController)
-companyRoutes.get('/members/:id', getCompanyMembersController)
-// companyRoutes.delete('/delete/:id', deleteCompanyByIdController)
-companyRoutes.put('/change/member/role/:id', changeCompanyMemberRoleController)
+companyRoutes.get('/', CompanyController.getCompaniesController)
+companyRoutes.get('/:slug', CompanyController.getCompanyBySlugController)
+companyRoutes.post('/', CompanyController.createCompanyController)
+companyRoutes.post('/bulk', CompanyController.bulkCreateCompanyController)
+companyRoutes.put('/:id', CompanyController.updateCompanyController)
 
 export default companyRoutes

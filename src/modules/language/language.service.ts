@@ -14,6 +14,33 @@ export interface PaginationResponse {
     }
 }
 
+export const getAllLanguagesService = async (isActive?: boolean) => {
+    const query: FilterQuery<LanguageDocument> = {}
+
+    // Tetap pertahankan filter isActive agar kita bisa mengambil hanya bahasa yang aktif
+    if (typeof isActive === 'boolean') {
+        query.isActive = isActive
+    }
+
+    // Mengambil semua data tanpa skip dan limit
+    const rawItems = await LanguageModel.find(query)
+        .select('-__v')
+        .sort({ orderPosition: 1, name: 1 })
+        .lean()
+
+    // Transformasi _id menjadi id
+    const data = rawItems.map(({ _id, ...rest }) => ({
+        id: _id.toString(),
+        ...rest
+    }))
+
+    return {
+        success: true,
+        message: 'Successfully fetched all languages',
+        data
+    }
+}
+
 export const getLanguagesPaginatedService = async (
     page: number = 1,
     limit: number = 10,
@@ -39,7 +66,7 @@ export const getLanguagesPaginatedService = async (
 
     const skip = (page - 1) * limit
 
-    const [data, totalData] = await Promise.all([
+    const [rawItems, totalData] = await Promise.all([
         LanguageModel.find(query)
             .select('-__v')
             .sort({ orderPosition: 1, name: 1 })
@@ -48,6 +75,11 @@ export const getLanguagesPaginatedService = async (
             .lean(),
         LanguageModel.countDocuments(query)
     ])
+
+    const data = rawItems.map(({ _id, ...rest }) => ({
+        id: _id.toString(),
+        ...rest
+    }))
 
     return {
         data,
