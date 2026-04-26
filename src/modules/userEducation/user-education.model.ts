@@ -8,6 +8,11 @@ export const userEducationSchema = new Schema<IUserEducation>(
             ref: 'Institution', // Assumes you have an Institution model
             required: [true, 'Institution is required']
         },
+        institutionName: {
+            type: String,
+            required: [true, 'Institution name is required'],
+            trim: true
+        },
         degree: {
             type: String,
             required: [true, 'Degree is required'],
