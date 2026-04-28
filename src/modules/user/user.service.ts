@@ -11,9 +11,6 @@ import { verifyEmailTemplate } from '../../mailers/templates/template'
 import { config } from '../../config/app.config'
 
 export const getCurrentUserService = async (userId: string) => {
-    // 1. Find the Member record
-    // 2. Populate 'userId' (User model)
-    // 3. INSIDE 'userId', populate the 'languages.languageId' path
     const member = await MemberModel.findOne({ userId })
         .populate({
             path: 'userId',
@@ -25,9 +22,9 @@ export const getCurrentUserService = async (userId: string) => {
                     model: 'Language'
                 },
                 {
-                    path: 'educations.institution', // Populating the institution inside educations
+                    path: 'educations.institution',
                     select: '-__v -createdAt -updatedAt',
-                    model: 'Institution' // Ensure this matches your Institution model name
+                    model: 'Institution'
                 }
             ]
         })
@@ -37,14 +34,19 @@ export const getCurrentUserService = async (userId: string) => {
         throw new BadRequestException('User or Member record not found')
     }
 
-    // Cast the userId as any or your UserDocument type to access properties safely
-    const userDoc = member.userId as any
+    // Panggil toJSON agar transformasi schema di langkah #1 berjalan otomatis
+    // Ini akan mengubah _id -> id di semua level (nested populate)
+    const memberObj = member.toJSON()
 
-    // Return a combined object including the new populated languages
+    const userDoc = memberObj.userId
+
     return {
+        // Karena kita sudah memanggil toJSON(), semua _id di dalam userDoc
+        // dan role sudah berubah menjadi id
         user: userDoc,
-        role: member.role,
-        joinedAt: member.joinedAt
+        role: memberObj.role,
+        joinedAt: memberObj.joinedAt,
+        id: memberObj.id // id milik record Member
     }
 }
 

@@ -55,6 +55,15 @@ export const userEducationSchema = new Schema<IUserEducation>(
     },
     {
         _id: true, // Usually keep this true for Education so you can edit specific entries
-        timestamps: true
+        timestamps: true,
+        toJSON: {
+            virtuals: true,
+            transform: (doc, ret) => {
+                delete (ret as any)._id // Hapus _id asli agar lebih rapi
+                delete (ret as any).__v
+                return ret
+            }
+        },
+        toObject: { virtuals: true }
     }
 )

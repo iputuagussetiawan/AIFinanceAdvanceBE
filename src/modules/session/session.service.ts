@@ -46,29 +46,24 @@ export const getSessionByIdService = async (sessionId: string) => {
             ]
         })
         .select('-expiresAt')
-        .lean()
 
     if (!session || !session.userId) {
         throw new NotFoundException('Session or User not found')
     }
 
-    const user = session.userId as any
+    const sessionObj = session.toJSON()
+    const user = sessionObj.userId as any
 
-    // 2. Fetch the Member record to get the Role
-    // This connects the User ID to their specific permissions/role
-    const member = await MemberModel.findOne({ userId: user._id })
-        .populate({
-            path: 'role',
-            select: 'name permissions' // Only get what you need
-        })
-        .select('role organization') // Exclude other member-specific junk
-        .lean()
+    const member = await MemberModel.findOne({ userId: user.id }) // user.id sudah string
+        .populate({ path: 'role', select: 'name permissions' })
+
+    const memberObj = member?.toJSON() || null
 
     // 3. Merge and return
     return {
         user: {
             ...user,
-            role: member?.role || null // Role is now flattened into the user object
+            role: memberObj?.role || null
         }
     }
 }

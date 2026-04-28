@@ -25,7 +25,16 @@ const roleSchema = new Schema<RoleDocument>(
         }
     },
     {
-        timestamps: true
+        timestamps: true,
+        toJSON: {
+            virtuals: true,
+            transform: (doc, ret) => {
+                delete (ret as any)._id // Hapus _id asli agar lebih rapi
+                delete (ret as any).__v
+                return ret
+            }
+        },
+        toObject: { virtuals: true }
     }
 )
 
