@@ -43,9 +43,9 @@ export const bulkUpdateUserEducationService = async (
     user.educations = educationArray
     user.markModified('educations')
     await user.save()
-    await user.populate('educations.institution')
+    //await user.populate('educations.institution')
 
-    return user.educations
+    return user
 }
 
 /**

@@ -5,8 +5,9 @@ export const userEducationSchema = new Schema<IUserEducation>(
     {
         institution: {
             type: Schema.Types.ObjectId,
-            ref: 'Institution', // Assumes you have an Institution model
-            required: [true, 'Institution is required']
+            ref: 'Institution',
+            required: false,
+            default: undefined
         },
         institutionName: {
             type: String,

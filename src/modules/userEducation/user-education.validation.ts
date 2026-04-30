@@ -4,7 +4,7 @@ import { Types } from 'mongoose'
 export const userEducationValidation = z
     .object({
         // Reference to Institution. Usually a string ID from the frontend.
-        institution: z.union([z.string(), z.instanceof(Types.ObjectId)]),
+        institution: z.string().optional(),
         institutionName: z.string().min(2, 'Institution name is required').trim(),
 
         // --- Core Details ---
