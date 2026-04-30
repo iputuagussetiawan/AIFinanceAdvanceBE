@@ -1,13 +1,13 @@
 import { Types } from 'mongoose'
 
 export interface IExperience {
-    // MongoDB ID (Optional for new entries, required for updates/deletes)
-    _id?: string | Types.ObjectId
-    id?: string // Virtual ID for the frontend
-
     // --- Identifiers ---
-    // Link to a Company model ID or a custom string name
+    _id?: string | Types.ObjectId // ← added
+    id?: string // ← added (virtual)
+
+    // --- Company ---
     company?: string | Types.ObjectId | null
+    companyName: string
 
     // --- Role Details ---
     title: string
@@ -27,12 +27,12 @@ export interface IExperience {
     endDate?: Date | null
 
     // --- Location ---
-    location: string
-    locationType: 'Remote' | 'On-site' | 'Hybrid' | string
+    location?: string // ← changed from required to optional
+    locationType?: string // ← changed from required to optional
 
     // --- Content ---
     description?: string
-    whereFineThisJobs?: string // "Where did you find this job?"
+    whereFineThisJobs?: string
 
     // --- Metadata ---
     orderPosition: number
