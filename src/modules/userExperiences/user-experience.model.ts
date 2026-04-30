@@ -1,108 +1,74 @@
 import { Schema } from 'mongoose'
-import type { IExperience } from './user-experience.validation'
-export const userExperienceSchema = new Schema<IExperience>(
+import type { IUserExperience } from './user-experience.validation'
+
+export const userExperienceSchema = new Schema<IUserExperience>(
     {
-        // --- Identifiers ---
         company: {
             type: Schema.Types.ObjectId,
-            ref: 'Company',
+            ref: 'Company', // Pastikan model Company sudah ada atau sesuaikan namanya
             required: false,
             default: undefined
         },
-
         companyName: {
             type: String,
-            required: [true, 'Institution name is required'],
+            required: [true, 'Company name is required'],
             trim: true
         },
-
-        // --- Role Details ---
+        location: {
+            type: String,
+            trim: true
+        },
         title: {
             type: String,
             required: [true, 'Job title is required'],
-            trim: true,
-            minlength: [2, 'Job title must be at least 2 characters'],
-            maxlength: [100, 'Job title cannot exceed 100 characters']
+            trim: true
         },
-
-        profileHeadline: {
-            type: String,
-            trim: true,
-            maxlength: [220, 'Profile headline cannot exceed 220 characters']
-        },
-
         employmentType: {
             type: String,
-            required: [true, 'Employment type is required'],
-            trim: true,
-            enum: {
-                values: [
-                    'Full-time',
-                    'Part-time',
-                    'Self-employed',
-                    'Freelance',
-                    'Contract',
-                    'Internship'
-                ],
-                message:
-                    'Employment type must be one of: Full-time, Part-time, Self-employed, Freelance, Contract, Internship'
-            }
+            enum: [
+                'Full-time',
+                'Part-time',
+                'Self-employed',
+                'Freelance',
+                'Contract',
+                'Internship',
+                'Apprenticeship'
+            ],
+            default: 'Full-time'
         },
-
-        isCurrent: {
-            type: Boolean,
-            default: false
-        },
-
         startDate: {
             type: Date,
             required: [true, 'Start date is required']
         },
-
         endDate: {
             type: Date,
             default: null,
             validate: {
-                validator: function (this: IExperience, value: Date) {
+                validator: function (this: IUserExperience, value: Date) {
                     if (this.isCurrent || !value) return true
-                    return value > this.startDate
+                    return value >= this.startDate
                 },
-                message: 'End date must be after the start date'
+                message: 'End date must be after the start date.'
             }
         },
-
-        location: {
-            type: String,
-            required: false,
-            trim: true,
-            maxlength: [100, 'Location cannot exceed 100 characters']
+        isCurrent: {
+            type: Boolean,
+            default: false
         },
-
-        locationType: {
-            type: String,
-            required: false,
-            enum: {
-                values: ['Remote', 'On-site', 'Hybrid'],
-                message: 'Location type must be one of: Remote, On-site, Hybrid'
-            }
-        },
-
         description: {
             type: String,
             trim: true,
             maxlength: [2000, 'Description cannot exceed 2000 characters']
         },
-
-        whereFineThisJobs: {
-            type: String,
-            trim: true,
-            maxlength: [100, 'Job source cannot exceed 100 characters']
-        },
-
+        skills: [
+            {
+                type: String,
+                trim: true
+            }
+        ],
         orderPosition: {
             type: Number,
-            default: 0,
-            min: [0, 'Order position cannot be negative']
+            default: 0
         }
     },
     {

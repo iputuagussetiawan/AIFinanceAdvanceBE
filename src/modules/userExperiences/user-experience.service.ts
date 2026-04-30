@@ -1,110 +1,65 @@
-import { Types } from 'mongoose'
-import { NotFoundException, BadRequestException } from '../../utils/appError'
+import { NotFoundException } from '../../utils/appError'
 import UserModel from '../user/user.model'
-import type { IExperience } from './user-experience.validation'
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+import type { IUserExperience } from './user-experience.validation'
 
 /**
- * Sanitize incoming experience data:
- * - Convert empty string company to undefined (prevents ObjectId cast error)
- * - Convert empty string endDate to null
+ * Service untuk menambah atau memperbarui satu entri pengalaman kerja
  */
-const sanitizeExperience = (exp: IExperience): IExperience => ({
-    ...exp,
-    company: exp.company && exp.company !== '' ? exp.company : undefined,
-    endDate: exp.endDate || null
-})
-
-/**
- * Match experience by _id if provided, otherwise fallback to title match
- */
-const matchExperience = (existing: any, incoming: IExperience): boolean => {
-    if (incoming._id && existing._id) {
-        return existing._id.toString() === incoming._id.toString()
-    }
-    // Fallback: match by title only (company can be null/undefined)
-    return existing.title === incoming.title
-}
-
-// ─── Services ─────────────────────────────────────────────────────────────────
-
-/**
- * Add or Update a single Experience entry
- */
-export const updateUserExperienceService = async (userId: string, experienceData: IExperience) => {
+export const updateUserExperienceService = async (
+    userId: string,
+    experienceData: IUserExperience
+) => {
     const user = await UserModel.findById(userId)
     if (!user) throw new NotFoundException('User not found')
 
     if (!user.experiences) user.experiences = []
 
-    const sanitized = sanitizeExperience(experienceData)
-    const index = user.experiences.findIndex((exp: any) => matchExperience(exp, sanitized))
+    // Mencari entri yang sama berdasarkan Nama Perusahaan dan Posisi
+    const experienceIndex = user.experiences.findIndex(
+        (exp) =>
+            exp.companyName === experienceData.companyName && exp.title === experienceData.title
+    )
 
-    if (index > -1) {
-        user.experiences[index] = sanitized
+    if (experienceIndex > -1) {
+        // Update entri yang ada
+        user.experiences[experienceIndex] = experienceData
     } else {
-        user.experiences.push(sanitized)
+        // Tambah entri baru
+        user.experiences.push(experienceData)
     }
 
     user.markModified('experiences')
     await user.save()
+
+    // Opsional: Populate reference jika ada field company ID
     await user.populate('experiences.company')
 
     return user.experiences
 }
 
 /**
- * Bulk Add or Update experience history
- * Replaces entire experiences array with incoming order (orderPosition driven)
+ * Bulk Add atau Update riwayat pengalaman kerja (Penting untuk Reordering/Dnd)
  */
 export const bulkUpdateUserExperienceService = async (
     userId: string,
-    experienceArray: IExperience[]
+    experienceArray: IUserExperience[]
 ) => {
-    if (!Array.isArray(experienceArray)) {
-        throw new BadRequestException('experienceArray must be an array')
-    }
-
     const user = await UserModel.findById(userId)
     if (!user) throw new NotFoundException('User not found')
 
-    if (!user.experiences) user.experiences = []
-
-    const sanitizedArray = experienceArray.map(sanitizeExperience)
-
-    for (const incoming of sanitizedArray) {
-        const index = user.experiences.findIndex((existing: any) =>
-            matchExperience(existing, incoming)
-        )
-
-        if (index > -1) {
-            // UPDATE existing
-            user.experiences[index] = incoming
-        } else {
-            // ADD new
-            user.experiences.push(incoming)
-        }
-    }
-
-    // Re-sort by orderPosition after bulk update
-    user.experiences.sort((a: any, b: any) => (a.orderPosition ?? 0) - (b.orderPosition ?? 0))
+    // Menimpa array lama dengan array baru (termasuk urutan orderPosition yang baru)
+    user.experiences = experienceArray
 
     user.markModified('experiences')
     await user.save()
-    await user.populate('experiences.company')
 
-    return user.experiences
+    return user
 }
 
 /**
- * Remove a single experience entry by ID
+ * Service untuk menghapus satu entri pengalaman kerja spesifik
  */
 export const removeUserExperienceService = async (userId: string, experienceId: string) => {
-    if (!Types.ObjectId.isValid(experienceId)) {
-        throw new BadRequestException('Invalid experience ID')
-    }
-
     const result = await UserModel.findByIdAndUpdate(
         userId,
         { $pull: { experiences: { _id: experienceId } } },
@@ -118,22 +73,16 @@ export const removeUserExperienceService = async (userId: string, experienceId: 
 }
 
 /**
- * Bulk remove experience entries by IDs
+ * Bulk remove entri pengalaman berdasarkan list ID
  */
 export const bulkRemoveUserExperienceService = async (userId: string, experienceIds: string[]) => {
-    if (!Array.isArray(experienceIds) || experienceIds.length === 0) {
-        throw new BadRequestException('experienceIds must be a non-empty array')
-    }
-
-    // Validate all IDs before touching the DB
-    const invalidIds = experienceIds.filter((id) => !Types.ObjectId.isValid(id))
-    if (invalidIds.length > 0) {
-        throw new BadRequestException(`Invalid experience IDs: ${invalidIds.join(', ')}`)
-    }
-
     const result = await UserModel.findByIdAndUpdate(
         userId,
-        { $pull: { experiences: { _id: { $in: experienceIds } } } },
+        {
+            $pull: {
+                experiences: { _id: { $in: experienceIds } }
+            }
+        },
         { new: true }
     )
 

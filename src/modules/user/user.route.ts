@@ -34,6 +34,7 @@ userRoutes.delete('/educations/:educationId', UserEducationController.removeEduc
 
 userRoutes.put('/experiences', UserExperienceController.updateExperience)
 userRoutes.put('/experiences/bulk', UserExperienceController.bulkUpdateExperience)
-// userRoutes.delete('/experiences/:experienceId', UserExperienceController.removeExperience)
-// userRoutes.delete('/experiences/bulk', UserExperienceController.bulkRemoveExperience)
+userRoutes.delete('/experiences/bulk', UserExperienceController.bulkRemoveExperience)
+userRoutes.delete('/experiences/:experienceId', UserExperienceController.removeExperience)
+
 export default userRoutes

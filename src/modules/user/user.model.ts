@@ -4,7 +4,7 @@ import type { IUserLanguage } from '../userlanguage/user-language.validation'
 import { userLanguageSchema } from '../userlanguage/user-language.model'
 import type { IUserEducation } from '../userEducation/user-education.validation'
 import { userEducationSchema } from '../userEducation/user-education.model'
-import type { IExperience } from '../userExperiences/user-experience.validation'
+import type { IUserExperience } from '../userExperiences/user-experience.validation'
 import { userExperienceSchema } from '../userExperiences/user-experience.model'
 
 // _id: false prevents Mongoose from creating a unique ID for every array item
@@ -31,7 +31,7 @@ export interface UserDocument extends Document {
     omitPassword(): Omit<UserDocument, 'password'>
     languages?: IUserLanguage[]
     educations?: IUserEducation[]
-    experiences?: IExperience[]
+    experiences?: IUserExperience[]
 }
 
 const userSchema = new Schema<UserDocument>(

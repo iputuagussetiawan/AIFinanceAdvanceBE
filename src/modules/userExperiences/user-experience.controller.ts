@@ -1,80 +1,94 @@
-import { Request, Response, NextFunction } from 'express'
-import * as ExperienceService from './user-experience.service'
+import { Request, Response } from 'express'
 import { BadRequestException } from '../../utils/appError'
+import { HTTPSTATUS } from '../../config/http.config'
+import { userExperienceValidation } from './user-experience.validation'
+import * as ExperienceService from './user-experience.service'
+import { z } from 'zod'
+import { asyncHandler } from '../../middlewares/asyncHandler.middleware'
 
 export const UserExperienceController = {
-    updateExperience: async (req: Request, res: Response, next: NextFunction) => {
-        try {
-            if (!req.user?._id) {
-                throw new BadRequestException('User authentication required')
-            }
-            const data = await ExperienceService.updateUserExperienceService(
-                req.user._id.toString(),
-                req.body
-            )
-            res.status(200).json({ success: true, data })
-        } catch (error) {
-            next(error)
-        }
-    },
+    /**
+     * Update atau Tambah satu entri pengalaman kerja
+     */
+    updateExperience: asyncHandler(async (req: Request, res: Response) => {
+        const userId = req.user?._id as string
+        if (!userId) throw new BadRequestException('User authentication required')
 
-    bulkUpdateExperience: async (req: Request, res: Response, next: NextFunction) => {
-        try {
-            if (!req.user?._id) {
-                throw new BadRequestException('User authentication required')
-            }
+        // Validasi body dengan Zod
+        const body = userExperienceValidation.parse(req.body)
 
-            const { experiences } = req.body
-            if (!Array.isArray(experiences) || experiences.length === 0) {
-                throw new BadRequestException('experiences must be a non-empty array')
-            }
+        const data = await ExperienceService.updateUserExperienceService(userId, body)
 
-            const data = await ExperienceService.bulkUpdateUserExperienceService(
-                req.user._id.toString(),
-                experiences
-            )
-            res.status(200).json({ success: true, data })
-        } catch (error) {
-            next(error)
-        }
-    }
+        return res.status(HTTPSTATUS.OK).json({
+            success: true,
+            message: 'Experience updated successfully',
+            data
+        })
+    }),
 
-    // removeExperience: async (req: Request, res: Response, next: NextFunction) => {
-    //     try {
-    //         const userId = getUserId(req)
+    /**
+     * Bulk Sync Experience (Penting untuk Reordering Drag & Drop)
+     */
+    bulkUpdateExperience: asyncHandler(async (req: Request, res: Response) => {
+        const userId = req.user?._id as string
+        if (!userId) throw new BadRequestException('User authentication required')
 
-    //         const { experienceId } = req.params
-    //         if (!experienceId) throw new BadRequestException('experienceId is required')
+        // Buat schema wrapper untuk validasi bulk agar .coerce bekerja di dalam array
+        const bulkSchema = z.object({
+            experiences: z.array(userExperienceValidation)
+        })
 
-    //         const data = await ExperienceService.removeUserExperienceService(userId, experienceId)
-    //         res.status(200).json({ success: true, data })
-    //     } catch (error) {
-    //         next(error)
-    //     }
-    // },
+        // Validasi seluruh req.body
+        const { experiences } = bulkSchema.parse(req.body)
 
-    // bulkRemoveExperience: async (req: Request, res: Response, next: NextFunction) => {
-    //     try {
-    //         if (!req.user?._id) {
-    //             throw new BadRequestException('User authentication required')
-    //         }
+        const data = await ExperienceService.bulkUpdateUserExperienceService(userId, experiences)
 
-    //         const { experienceIds } = req.body
-    //         if (!Array.isArray(experienceIds) || experienceIds.length === 0) {
-    //             throw new BadRequestException('experienceIds must be a non-empty array')
-    //         }
+        return res.status(HTTPSTATUS.OK).json({
+            success: true,
+            message: 'Experience history synced successfully',
+            data
+        })
+    }),
 
-    //         const data = await ExperienceService.bulkRemoveUserExperienceService(
-    //             req.user._id.toString(),
-    //             experienceIds,
-    //         )
-    //         res.status(200).json({
-    //             success: true,
-    //             message: 'Selected experience entries removed',
-    //             data,
-    //         })
-    //     } catch (error) {
-    //         next(error)
-    //     }
-    // },
+    /**
+     * Menghapus satu entri pengalaman kerja berdasarkan ID
+     */
+    removeExperience: asyncHandler(async (req: Request, res: Response) => {
+        const userId = req.user?._id as string
+        if (!userId) throw new BadRequestException('User authentication required')
+
+        const { experienceId } = req.params
+        if (!experienceId) throw new BadRequestException('Experience ID is required')
+
+        const data = await ExperienceService.removeUserExperienceService(
+            userId,
+            experienceId.toString()
+        )
+
+        return res.status(HTTPSTATUS.OK).json({
+            success: true,
+            message: 'Experience entry removed',
+            data
+        })
+    }),
+
+    /**
+     * Menghapus banyak entri sekaligus
+     */
+    bulkRemoveExperience: asyncHandler(async (req: Request, res: Response) => {
+        const userId = req.user?._id as string
+        if (!userId) throw new BadRequestException('User authentication required')
+
+        const { experienceIds } = req.body
+        // Validasi bahwa input adalah array of strings
+        const validatedIds = z.array(z.string()).parse(experienceIds)
+
+        const data = await ExperienceService.bulkRemoveUserExperienceService(userId, validatedIds)
+
+        return res.status(HTTPSTATUS.OK).json({
+            success: true,
+            message: 'Selected experience entries removed',
+            data
+        })
+    })
 }
